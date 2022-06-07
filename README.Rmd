@@ -13,7 +13,7 @@ This repo contains a series of tutorials for quantitative epidemiologic methods 
 ## Table of Contents  
 The repo is organized into folders by methodology:  
 
-**01_Spatial/**  
+**Spatial/**  
 *A folder of sample codes to explore spatial data - both visualization and analysis.*   
 
 01_ChoroplethMaps 
@@ -28,7 +28,7 @@ The repo is organized into folders by methodology:
 
 
 
-**02_TransmissionModels/**  
+**TransmissionModels/**  
 *A folder of sample codes for mathematical models of infectious disease transmission.* 
 
 ## How to use  

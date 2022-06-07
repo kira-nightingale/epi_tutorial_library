@@ -11,7 +11,7 @@ infectious disease.
 
 The repo is organized into folders by methodology:
 
-**01\_Spatial/**  
+**Spatial/**  
 *A folder of sample codes to explore spatial data - both visualization
 and analysis.*
 
@@ -30,7 +30,7 @@ and analysis.*
     on the city of Philadelphia looking at litter index and trashcan
     availability.
 
-**02\_TransmissionModels/**  
+**TransmissionModels/**  
 *A folder of sample codes for mathematical models of infectious disease
 transmission.*
 

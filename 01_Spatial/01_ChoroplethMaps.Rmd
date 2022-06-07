@@ -1,0 +1,335 @@
+---
+title: "Spatial visualization tutorial"
+author: "B. Raynor"
+date: "6/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### A few notes  
+**Code location**
+
++ This code is publically avaialble on github
+
+**R packages**  
+
++ There are 2 main R packages for spatial analysis: sf and sp  
+
++ The sp package is older and has a lot of solutions online relying on this pacakge. The sf package is newer (possibly less online advice) but is based on the R dataframe structure and is compatible with the 'tidyverse.'  
+
++ This tutorial will be relying on the sf package  
+
+### Getting started  
+Load packages needed for analysis
+```{r, warning=FALSE, message=FALSE}
+#clear environment
+rm(list = ls()) 
+
+# #Install packages - only one time ever, not every time you run code
+# install.packages('sf')
+# install.packages('dplyr')
+# install.pacakges('ggplot2')
+
+#load packages
+library(sf) #spatial analysis
+library(dplyr) #tidy data manipulation
+library(ggplot2) #tidy figures
+
+
+```
+
+
+Obtain some data:  
+
++ Census tracts (polygons): https://www.opendataphilly.org/dataset/philadelphia-vital-statistics-population-metrics
+
++ Litter index (lines): https://www.opendataphilly.org/dataset/litter-index  
+
++ Trashcan locations (points): https://www.opendataphilly.org/dataset/big-belly-waste-bins/resource/db473742-c618-4307-b16c-32a4a6d04b47  
+
+```{r}
+
+#######################################################################
+# Census tracts
+#######################################################################
+url <-'https://opendata.arcgis.com/api/v3/datasets/20332a074f0446b3b3190ba9d68b863e_0/downloads/data?format=shp&spatialRefId=4326'
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.census <- sf::read_sf(temp2)
+
+#Clean up a little for clarity
+sf.census <- sf.census%>%
+  rename('Tract_ID' = 'GEOGRAPHY_',
+         'Count_total' = 'COUNT_ALL_',
+         'Count_white' = 'COUNT_WHIT', 
+         'Count_black' = 'COUNT_BLAC', 
+         'Count_asian' = 'COUNT_ASIA',
+         'Area' = 'Shape__Are')%>% #rename variables
+  select(Tract_ID, Count_total, Count_white, Count_black, Count_asian, Area, geometry)%>%
+  mutate("PopnDensity" = Count_total/Area)
+
+#######################################################################
+#litter index 
+#######################################################################
+#specify url to data download
+url <- "https://opendata.arcgis.com/datasets/04fa63e09b284dbfbde1983eab367319_0.zip" #Litter index
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.litter <- sf::read_sf(temp2)
+
+#Clean up a little for clarity
+sf.litter <- sf.litter%>%
+  rename('Street_ID' = 'SEG_ID',
+         'LitterScore' = 'HUNDRED_BL',
+         'LitterScoreColor' = 'SCORE_COLO')%>% #rename variables
+  select(Street_ID, LitterScore, LitterScoreColor, geometry)%>%
+  unique()
+
+
+#######################################################################
+#trashcan locations 
+#######################################################################
+url <- "https://data.phila.gov/carto/api/v2/sql?q=SELECT+*,+ST_Y(the_geom)+AS+lat,+ST_X(the_geom)+AS+lng+FROM+wastebaskets_big_belly&filename=wastebaskets_big_belly&format=csv&skipfields=cartodb_id"
+
+#read in url
+df.cans <- read.csv(url)
+
+#Clean up a little for clarity
+df.cans <- df.cans %>%
+  select(objectid, lat, lng)
+```
+
+### Explore census block data
+First, lets focus the census block data. What is it?
+```{r}
+head(sf.census)
+```  
+
+Essentially, R sf objects are very similar to data frames with a column 'geometry' that bundles all the spatial information. This form is compatible with 'tidyverse' data manipulation. It is very similar to the ArcGIS 'attribute table'. 
+
+Let's quickly visualize the geometry. 
+```{r}
+ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.census, colour = "black", size=0.1, fill = NA)
+```  
+
+This is just the plotted 'geometry' column. The geometry column was organized based on census tracts - we have just potted every tract (polygons!) contained in the data set  
+
+The data we downloaded includes basic demographic information. Let's visualize the census tracts based on population.  
+```{r}
+map1 <- ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.census, aes(fill=Count_total),colour = "black", size=0.1)+
+  scale_fill_continuous(low = "white", high = "blue4", name= "Population  counts")
+map1
+```
+
+*Note: Notice how the fill color is a continuous gradient. There will be example code for discrete coloring below*  
+
+### Explore litter index data
+Next, lets examine to the litter index data. 
+```{r}
+head(sf.litter)
+```  
+*Note: instead of the geometry class being listed as 'MULTIPOLYGON' as before, it is listed as 'LINESTRING'. This means instead of being a polygon shape (like the census tract outlines), it is just a line (the street).*
+
+Let's quickly visualize the geometry. 
+```{r}
+ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.litter, colour = "gray", size=0.1, fill = NA)
+```  
+
+The shapefiles we downloaded were the litter index based on streets, so the geometry we have plotted is the streets (lines!) contained in the data set. 
+
+In addition to the outlines of the blocks, we can also color the data by one of the appended variables
+```{r}
+#Plot
+ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.litter, aes(color= LitterScoreColor),  size=0.1)
+```  
+
+We've plotted the streets by the score color, but the colors don't match the labels because we never told R what colors to use. Let's specify the color palette and try again
+
+```{r}
+#Create color palette
+Pal <- c('GREEN' = 'seagreen4',
+          'YELLOW' = 'goldenrod3',
+          'ORANGE' = 'darkorange3',
+          'RED' = 'red3',
+          'MAROON' = 'red4',
+          'GREY' = 'grey')
+
+#plot
+ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.litter, aes(color= LitterScoreColor),  size=0.1)+
+  scale_color_manual(values = Pal, name= "Litter index") 
+```
+
+*Note: color selection is a bit of a big deal in spatial visualization. I matched the index names above, but in general, I try to avoid red/green color schemes because of the prevalence of red green color blindness*  
+
+### Explore trashcan location data  
+Finally, let's take a look at the trashcan location data  
+```{r}
+head(df.cans) 
+```
+
+This data does not have a 'geometry' column! This is because it was a .csv file we read in as dataframe and not a shapefile that we read in as a sf object. It does include spatial data (columns for lat and lng). Specifically, we know that because it only specifies one lat and lng per line that this is 'point' data (as opposed to lines or polygons) 
+
+One method is to plot these directly:  
+```{r}
+ggplot()+
+  theme_void()+
+  geom_point(data=df.cans, (aes(x=lng, y=lat)))
+```   
+
+Though this method works, it can sometimes cause problems with projections, conversions and other spatial analysis. It may be easier to convert the data to a spatial object before continuing.  
+
+```{r}
+#Exctract projection from blocks
+crs_PHL <- st_crs(sf.census)
+
+#convert to sf object
+sf.cans <- df.cans %>%
+  st_as_sf(coords =c('lng', 'lat'))%>%
+  `st_crs<-`(crs_PHL) #set projection
+  
+
+ggplot()+
+  theme_void()+
+  geom_sf(data = sf.cans)
+```
+
+### Compare data source and combine visualizations  
+
+One important use of spatial visualization is hypothesis generation. For example, one possible hypothesis is that trash index is (negatively) correlated with the number of trashcans. To explore this hypothesis we can further visualize the data as well as test it statistically. 
+
+
+
+With ggplot, its easy to layer different spatial layers together  
+```{r}
+ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.census, aes(fill=Count_total),colour = "black", size=0.1)+
+  scale_fill_continuous(low = "white", high = "blue4", name= "Population")+
+  geom_sf(data = sf.litter, aes(color= LitterScoreColor),  size=0.1)+
+  scale_color_manual(values = Pal, name= "Litter index")+
+  geom_sf(data = sf.cans, size=0.5)
+```  
+
+Stacking layers together can be very useful in some contexts, but here it is a little overwhelming. More useful would be converting the spatial data to be able to compare at the same spatial units.  
+
+First, lets count up the trashcans within each census tract
+```{r}
+#Append a census tract to each trash can
+df.cans <- st_join(sf.cans, sf.census, join = st_within) #Find intersections
+
+#count number of cans per census tract and append to census data
+sf.census <- left_join(sf.census,  
+          plyr::count(df.cans$Tract_ID)%>% 
+            rename("Tract_ID" = 'x', "TrashcanNumber"='freq'))%>% 
+  mutate(TrashcanNumber = ifelse(is.na(TrashcanNumber), 0, TrashcanNumber)) #replace NA with 0
+
+map2 <- ggplot() + 
+  theme_void()+
+  geom_sf(data = sf.census, colour = "gray", size=0.1, fill=NA)+
+  geom_sf(data = sf.cans, size=0.5)+ 
+  ggtitle("Points layered over tract polygons")
+
+map3 <- ggplot()+
+  theme_void()+
+  geom_sf(data = sf.census, aes(fill=TrashcanNumber), colour = "gray", size=0.1)+
+  ggtitle("Tract polygons colored by trashcan #")+
+  scale_fill_continuous(low = "white", high = "seagreen4", name= "Trashcan Number")
+
+map2; map3
+
+```
+
+We can also append a metric of the street litter index to the census tract files. This is a little more complicated because you can't just simply count up the points that fall within the polygons. I'm going to find the average score of the distance of the streets within each polygon.  
+```{r}
+sf.litter0 <- sf.litter #save original sf.litter before manipulating
+
+# ##############################################################################
+#Computation for st_intersection is really long
+#for now - thinning data for reasonable computation time
+
+set.seed(123) # set seed to replicate results when using random draws
+#randomly simple 10% of data
+sf.litter <- sf.litter[sample(c(1:nrow(sf.litter)), round(nrow(sf.litter)/10),
+                              replace = FALSE, prob = NULL),]
+# ##############################################################################
+
+#Find intersection of tracts and streets
+sf.litter <- st_intersection(sf.litter, sf.census) #computation is long af
+
+#calculate distance of each intersection
+sf.litter$dist = as.numeric(st_length(sf.litter)) #take distance of intersection
+
+#format data 
+sf.litter <- sf.litter %>% 
+  filter(dist != 0)%>% #filter out point intersections (border)
+  mutate(distscore = dist*LitterScore)%>% #distance * score number
+  st_drop_geometry() %>% #drop geometry so that you can manipulate normally
+  group_by(Tract_ID)%>% # for each census tract find sums of distnace*score and distance
+  summarise(TotalScore = sum(distscore),
+            TotalDist = sum(dist))%>%
+  mutate(AvgScore = TotalScore/TotalDist, #find average score over total distance
+         
+         #apply color scheme from before:
+         ScoreColor="GREY",
+         ScoreColor=ifelse(AvgScore > 0  & AvgScore <1.75, "GREEN", ScoreColor),
+         ScoreColor=ifelse(AvgScore>=1.75& AvgScore <2.25, "YELLOW",ScoreColor),
+         ScoreColor=ifelse(AvgScore>=2.25& AvgScore <2.75, "ORANGE",ScoreColor),
+         ScoreColor=ifelse(AvgScore>=2.75& AvgScore <3.25, "RED",ScoreColor),
+         ScoreColor=ifelse(AvgScore>=3.25, "MARROON",ScoreColor))
+  
+sf.census = left_join(sf.census, sf.litter) #append these new attributes to census tract data
+
+map4 <-ggplot()+
+  theme_void()+
+  geom_sf(data=sf.census, fill=NA, color="black", size=0.1)+
+  geom_sf(data=sf.litter0, aes(color=LitterScoreColor), alpha=0.3)+
+  scale_color_manual(values = Pal, name= "Litter index") +
+  ggtitle("Litter indexed streets plotted over tracts")
+
+map5 <- ggplot()+
+  theme_void()+
+  geom_sf(data=sf.census, aes(fill=ScoreColor), alpha=0.8)+
+  scale_fill_manual(values = Pal, name= "Litter index") +
+  ggtitle("Tracts colored by mean litter index")
+
+map4;map5
+```
+
+**Now we can compare "apples to apples":**
+
+```{r}
+map3; map5
+```
+
+Visually, it looks like there may be some assoication with trashcan number and litter index. Now that we have everything standardly formatted, we can also run 'normal' statistics. 
+```{r}
+df.census <- sf.census %>%
+  st_drop_geometry()
+
+summary(lm(TrashcanNumber ~ AvgScore, data=sf.census))
+```

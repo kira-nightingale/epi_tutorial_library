@@ -173,6 +173,11 @@ pre code {
 
 <div id="a-few-notes" class="section level3">
 <h3>A few notes</h3>
+<p><strong>Code location</strong></p>
+<ul>
+<li><p>This code is part of a tutorial series - <a href="https://github.com/bhraynor/epi_tutorial_library">github repo</a></p></li>
+<li><p>The code for this file specifically is located <a href="https://github.com/bhraynor/epi_tutorial_library/blob/main/Spatial/01_ChoroplethMaps.Rmd">here</a></p></li>
+</ul>
 <p><strong>R packages</strong></p>
 <ul>
 <li><p>There are 2 main R packages for spatial analysis: sf and sp</p></li>
@@ -213,7 +218,7 @@ download.file(url, temp, mode=&#39;wb&#39;)
 unzip(zipfile=temp, exdir=temp2)
 
 # Read the shapefiles
-sf.census &lt;- sf::read_sf(temp2)
+sf.census &lt;- read_sf(temp2)
 
 #Clean up a little for clarity
 sf.census &lt;- sf.census%&gt;%
@@ -239,7 +244,7 @@ download.file(url, temp, mode=&#39;wb&#39;)
 unzip(zipfile=temp, exdir=temp2)
 
 # Read the shapefiles
-sf.litter &lt;- sf::read_sf(temp2)
+sf.litter &lt;- read_sf(temp2)
 
 #Clean up a little for clarity
 sf.litter &lt;- sf.litter%&gt;%

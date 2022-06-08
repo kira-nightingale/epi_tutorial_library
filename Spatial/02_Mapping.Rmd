@@ -1,0 +1,111 @@
+---
+title: "Mapping in R tutorial"
+author: "B. Raynor"
+date: "6/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Set up  
+
+Load packages   
+```{r}
+#clear environment
+rm(list = ls()) 
+
+# #To install packages:
+# install.packages("package_name")
+
+#load packages
+library(sf) #spatial analysis
+library(dplyr) #tidy data manipulation
+library(ggplot2) #tidy figures
+```  
+
+Get some data ([source](https://www.opendataphilly.org/dataset/philadelphia-hospitals))  
+We will be looking at locations of hospitals in the city of Philadelphia.  
+```{r}
+url <-'https://opendata.arcgis.com/datasets/df8dc18412494e5abbb021e2f33057b2_0.zip'
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.hospitals <- read_sf(temp2)
+```
+
+What are we working with?
+```{r}
+head(sf.hospitals)
+
+ggplot()+
+  theme_classic()+
+  geom_sf(data=sf.hospitals)
+```  
+
+We have locations of hospitals in Philadelphia with various attributes about the hospital (street address, hospital type, zip code etc.)  The visualization above is simply the coordinates plotted without any background or references at all. Even to those very familiar with Philadelphia, this visualization is lacking.  
+
+
+## Method 1: Create maps by layering shapefiles  
+The first method of adding a background to our hospital points, is to add another layer of a relevant shapefile. One of the advantages of this method is that you can do further analysis such as creating choropleth maps (see my previous [tutorial on choropleth maps](https://rpubs.com/bhraynor/Tutorial1_ChoroplethMaps)). A potential disadvantage is that you don't always have access to the shapefile of interest or what a more detailed backaground.
+
+To apply this method in the Philadelphia hospital example, we could obtain shapefiles of Philly zip codes and append the hospital information to plot:
+```{r, warning=FALSE, message=FALSE}
+#####################################################################
+#Retrieve zip code tract shapefiles
+######################################################################
+url <- "https://opendata.arcgis.com/api/v3/datasets/b54ec5210cee41c3a884c9086f7af1be_0/downloads/data?format=shp&spatialRefId=4326"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.zip <- read_sf(temp2)
+
+class(sf.zip$CODE)
+######################################################################
+#Append hospital counts to zip code
+######################################################################
+HospCount <- plyr::count(sf.hospitals$ZIP_CODE) %>%
+  rename("CODE" = "x", "HospCount"="freq") %>%
+  mutate(CODE = as.character(CODE))
+
+sf.zip <- left_join(sf.zip, HospCount)%>%
+  mutate(HospCount = ifelse(is.na(HospCount), 0, HospCount))
+
+######################################################################
+#Visualize
+######################################################################
+map1 <- ggplot()+
+  theme_void()+
+  geom_sf(data=sf.zip, fill=NA, color="gray", size=0.1)+
+  geom_sf(data=sf.hospitals)+
+  ggtitle("Hospitals w/ zip background")
+
+
+Pal <- RColorBrewer::brewer.pal(length(c(0:max(sf.zip$HospCount))), "Blues")
+map2 <- ggplot()+
+  theme_void()+
+  geom_sf(data=sf.zip, aes(fill=as.factor(HospCount)), color="gray", size=0.1)+
+  ggtitle("Zip codes colored by hospital")+
+  scale_fill_manual(values = Pal, name="Hospital Count") 
+
+map1;map2
+```  
+
+
+## Method 2: Add a background of imported tiles  
+There are several sources of map data that can be pulled in to form a background for your maps. My favorites are Google maps and OpenStreetMaps. *Note: Google maps has more copyright protection than OpenStreetMaps, so check any journals you plan to submit papers to before using Google Maps to make sure its okay*
+
+Pull in some background tiles
+```{r}
+```

@@ -10,9 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ### A few notes  
-**Code location**
+**Code location**  
 
-+ This code is publically avaialble on github
++ This code is part of a tutorial series - [github repo](https://github.com/bhraynor/epi_tutorial_library) 
+
++ The code for this file specifically is located [here](https://github.com/bhraynor/epi_tutorial_library/blob/main/Spatial/01_ChoroplethMaps.Rmd) 
+
 
 **R packages**  
 
@@ -37,8 +40,6 @@ rm(list = ls())
 library(sf) #spatial analysis
 library(dplyr) #tidy data manipulation
 library(ggplot2) #tidy figures
-
-
 ```
 
 
@@ -64,7 +65,7 @@ download.file(url, temp, mode='wb')
 unzip(zipfile=temp, exdir=temp2)
 
 # Read the shapefiles
-sf.census <- sf::read_sf(temp2)
+sf.census <- read_sf(temp2)
 
 #Clean up a little for clarity
 sf.census <- sf.census%>%
@@ -90,7 +91,7 @@ download.file(url, temp, mode='wb')
 unzip(zipfile=temp, exdir=temp2)
 
 # Read the shapefiles
-sf.litter <- sf::read_sf(temp2)
+sf.litter <- read_sf(temp2)
 
 #Clean up a little for clarity
 sf.litter <- sf.litter%>%

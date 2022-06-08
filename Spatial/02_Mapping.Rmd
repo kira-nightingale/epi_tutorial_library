@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Set up  
 
 Load packages   
-```{r}
+```{r, message=FALSE, warning=FALSE}
 #clear environment
 rm(list = ls()) 
 
@@ -71,7 +71,6 @@ unzip(zipfile=temp, exdir=temp2)
 # Read the shapefiles
 sf.zip <- read_sf(temp2)
 
-class(sf.zip$CODE)
 ######################################################################
 #Append hospital counts to zip code
 ######################################################################
@@ -108,4 +107,7 @@ There are several sources of map data that can be pulled in to form a background
 
 Pull in some background tiles
 ```{r}
-```
+```  
+
+## Method 3: Interactive maps with leaflet 
+

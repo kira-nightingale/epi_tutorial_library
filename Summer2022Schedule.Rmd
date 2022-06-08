@@ -20,17 +20,25 @@ knitr::opts_chunk$set(echo = TRUE)
 
 + Topic: Mapping in R; sources of background tiles, interactive maps
 
++ [Tutorial link](https://rpubs.com/bhraynor/mapping)
+
++ [Code link](https://github.com/bhraynor/epi_tutorial_library/blob/main/Spatial/02_Mapping.Rmd)
+
+### June 22, 2022
+  
++ Topic: GPS data analysis  
+
 + [Tutorial link]()
 
 + [Code link]()
 
-### June 22, 2022
-  
-+ Topic: GPS data analysis
-
 ### June 29, 2022  
 
-+ Topic: Classic spatial epi: spatial odds ratios, clustering, etc
++ Topic: Classic spatial epi: spatial odds ratios, clustering, etc  
+
++ [Tutorial link]()
+
++ [Code link]()
 
 ### July 6, 2022
 

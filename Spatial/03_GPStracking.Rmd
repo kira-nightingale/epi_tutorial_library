@@ -1,0 +1,74 @@
+---
+title: "Working with GPS tracking data"
+author: "B. Raynor"
+date: "6/14/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Set up  
+Load packages   
+```{r, message=FALSE, warning=FALSE}
+#clear environment
+rm(list = ls()) 
+
+# #To install packages:
+# install.packages("package_name")
+
+#load packages
+library(sf) #spatial analysis
+library(dplyr) #tidy data manipulation
+library(ggplot2) #tidy figures
+library(ggmap)
+
+```  
+
+We are going to be looking at data from tracked nightjars (birds) published through the UK governmnet: [source](https://ckan.publishing.service.gov.uk/dataset/gps-tracking-data-for-32-individual-european-nightjars-in-humberhead-peatlands-nnr-fr-2015-2018)
+
+```{r, warning=FALSE, message=FALSE}
+#source
+url <- "https://data-package.ceh.ac.uk/data/aa20f8c4-bbdb-4dfa-82b4-b9b3fd8f34eb.zip"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+temp2 <- paste0(temp2, "\\", list.files(temp2),'\\data')
+sf.birds <- read_sf(temp2)%>%
+  as.data.frame()%>%
+  st_as_sf(coords=c('Long', 'Lat'))
+```  
+
+What are we working with here?
+```{r}
+head(sf.birds)
+```
+Simple visualization:
+```{r, warning=FALSE, message=FALSE}
+
+
+
+sf.birds <- cbind(sf.birds, as.data.frame(st_coordinates(sf.birds)))
+bbox = c(left=min(sf.birds$X- 0.02),right=max(sf.birds$X +0.02), #longitude
+             top=max(sf.birds$Y + 0.02),bottom=min(sf.birds$Y - 0.02)) #latitude
+
+#Open street maps
+basemap <- ggmap(get_stamenmap(maptype='terrain', 
+                            bbox=bbox,
+                            zoom=12)) 
+
+basemap +
+  geom_sf(data=sf.birds, aes(color=ID), inherit.aes=FALSE)
+```
+
+## Locoh
+
+## KDE
+

@@ -27,7 +27,7 @@ library(ggplot2) #tidy figures
 
 Get some data ([source](https://www.opendataphilly.org/dataset/philadelphia-hospitals))  
 We will be looking at locations of hospitals in the city of Philadelphia.  
-```{r}
+```{r, message=FALSE, warning=FALSE}
 url <-'https://opendata.arcgis.com/datasets/df8dc18412494e5abbb021e2f33057b2_0.zip'
 
 #download zipfile and unzip
@@ -41,7 +41,7 @@ sf.hospitals <- read_sf(temp2)
 ```
 
 What are we working with?
-```{r}
+```{r, message=FALSE, warning=FALSE}
 head(sf.hospitals)
 
 ggplot()+
@@ -53,7 +53,7 @@ We have locations of hospitals in Philadelphia with various attributes about the
 
 
 ## Method 1: Create maps by layering shapefiles  
-The first method of adding a background to our hospital points, is to add another layer of a relevant shapefile. One of the advantages of this method is that you can do further analysis such as creating choropleth maps (see my previous [tutorial on choropleth maps](https://rpubs.com/bhraynor/Tutorial1_ChoroplethMaps)). A potential disadvantage is that you don't always have access to the shapefile of interest or what a more detailed backaground.
+The first method of adding a background to our hospital points, is to add another layer of a relevant shapefile. One of the advantages of this method is that you can do further analysis such as creating choropleth maps (see my previous [tutorial on choropleth maps](https://rpubs.com/bhraynor/Tutorial1_ChoroplethMaps)). A potential disadvantage is that you don't always have access to the shapefile of interest or may want a more detailed backaground.
 
 To apply this method in the Philadelphia hospital example, we could obtain shapefiles of Philly zip codes and append the hospital information to plot:
 ```{r, warning=FALSE, message=FALSE}
@@ -103,11 +103,108 @@ map1;map2
 
 
 ## Method 2: Add a background of imported tiles  
-There are several sources of map data that can be pulled in to form a background for your maps. My favorites are Google maps and OpenStreetMaps. *Note: Google maps has more copyright protection than OpenStreetMaps, so check any journals you plan to submit papers to before using Google Maps to make sure its okay*
+There are several sources of map data that can be pulled in to form a background for your maps. My favorite source is OpenStreetMap data via [stamen maps](http://maps.stamen.com/#watercolor/12/37.7706/-122.3782).
 
-Pull in some background tiles
-```{r}
+Pull in some background tiles from open street maps
+```{r, warning=FALSE, message=FALSE}
+library(ggmap)
+
+## Zoom- the higher the zoom the more detail. Zoom=10 is pretty fast less detail. Zoom =18 is max detail but takes a couple minutes to load
+
+#Get a 'bounding box' for philly
+coords <- as.data.frame(st_coordinates(sf.zip)) #pull out lat long coords
+bbox_PHL = c(left=min(coords$X),right=max(coords$X), #longitude
+             top=max(coords$Y),bottom=min(coords$Y)) #latitude
+
+#Open street maps
+OSM1 <- ggmap(get_stamenmap(maptype='terrain', 
+                            bbox=bbox_PHL,
+                            zoom=10)) 
+
+OSM2 <- ggmap(get_stamenmap(maptype='toner-lines', 
+                            bbox=bbox_PHL,
+                            zoom=10))
+
+OSM3 <-  ggmap(get_stamenmap(maptype='watercolor', 
+                            bbox=bbox_PHL,
+                            zoom=10))
+
+
+map4 <- OSM3 + 
+  theme_void()+
+  geom_sf(data=sf.hospitals, inherit.aes = FALSE)+
+  ggtitle("stamen map 'water color'")
+
+map5 <- OSM2 + 
+  theme_void()+
+  geom_sf(data=sf.zip,  
+          fill= "dodgerblue3", color="dodgerblue3", size=.1, alpha=0.1,
+          inherit.aes = FALSE)+
+  geom_sf(data=sf.hospitals, color="red3", pch=17, size=2, inherit.aes = FALSE)+
+  ggtitle("stamen map 'toner'")
+
+map6 <- OSM1 + 
+  theme_void()+
+  geom_sf(data=sf.zip, aes(fill=as.factor(HospCount)), size=0.1, alpha=0.7,
+          inherit.aes = FALSE)+
+  scale_fill_manual(values = Pal) +
+  theme(legend.position="none")+ 
+  ggtitle("stamen map 'terrain'")
+
+
+ggpubr::ggarrange(map4, map5, map6, ncol=3)
 ```  
 
-## Method 3: Interactive maps with leaflet 
+**A couple of 'good practices' when mapping:**  
 
++ Include a scale bar
+
++ Include a North arrow
+
+```{r}
+
+map5 +
+  ggsn::north(sf.zip, location = "topleft")+
+  ggsn::scalebar(sf.zip, 
+                 dist=2, dist_unit="mi", transform=TRUE, 
+                 anchor=c(x=mean(coords$X) + .2, y=mean(coords$Y))-.12, 
+                 location = "topleft",
+                 height=0.03, st.dist=0.05,
+                 st.color="goldenrod3", box.fill=c("goldenrod3", "white"),
+                 st.bottom=FALSE)
+  
+```
+
+
+
+## Method 3: Interactive maps with leaflet  
+One powerful package for mapping in R is [leaflet](https://rstudio.github.io/leaflet/). Leaflet works similar to the get_map function above where you call a base map and plot over it. However, these maps can be made to be interactive where you can zoom in and out and click on spatial objects to pop up information about different features.   
+```{r, message=FALSE, warning=FALSE}
+library(leaflet)
+
+lat_center <- mean(coords$Y, na.rm=TRUE)
+long_center <- mean(coords$X, na.rm=TRUE)
+
+#Set a color palette
+pal1 <- colorFactor(c("red3", "goldenrod3", "dodgerblue3", "slateblue4"),
+                        sf.hospitals$HOSPITAL_T) 
+
+leaflet() %>%
+    setView(lng = long_center, lat = lat_center, zoom = 11)%>% #center in AQP
+    addProviderTiles(providers$CartoDB.Positron)%>% # add third party provider tile
+    addCircleMarkers(data=sf.hospitals, 
+                     popup = ~paste(HOSPITAL_N),
+                     color=~pal1(HOSPITAL_T))%>%
+    addLegend("bottomright", data= sf.hospitals,
+              pal=pal1,
+              values=~HOSPITAL_T,    
+              title = 'Hospital type',
+              opacity = 0.8) %>%
+  addScaleBar()
+  
+  
+  
+
+```
+
+Click on the hospital of interest to pull up the name of the hospital. 

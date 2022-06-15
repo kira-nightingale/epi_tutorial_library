@@ -68,7 +68,9 @@ basemap +
   geom_sf(data=sf.birds, aes(color=ID), inherit.aes=FALSE)
 ```
 
-## Locoh
+## Homerange
 
-## KDE
+### Locoh
+
+### KDE
 

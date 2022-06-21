@@ -16,61 +16,177 @@ Load packages
 #clear environment
 rm(list = ls()) 
 
-# #To install packages:
-# install.packages("package_name")
-
-#load packages
-library(sf) #spatial analysis
-library(dplyr) #tidy data manipulation
-library(ggplot2) #tidy figures
+# install.packages("tlocoh", dependencies=T, repos=c("http://R-Forge.R-project.org" ,
+# "http://cran.cnr.berkeley.edu"))
+library(tlocoh)
+library(sp)
+library(rgdal)
+library(rgeos)
+library(sf)
 library(ggmap)
+library(dplyr)
 
+#get some data
+data(toni) #attach data
 ```  
 
-We are going to be looking at data from tracked nightjars (birds) published through the UK governmnet: [source](https://ckan.publishing.service.gov.uk/dataset/gps-tracking-data-for-32-individual-european-nightjars-in-humberhead-peatlands-nnr-fr-2015-2018)
-
-```{r, warning=FALSE, message=FALSE}
-#source
-url <- "https://data-package.ceh.ac.uk/data/aa20f8c4-bbdb-4dfa-82b4-b9b3fd8f34eb.zip"
-
-#download zipfile and unzip
-temp = tempfile()
-temp2 = tempfile()
-download.file(url, temp, mode='wb')
-unzip(zipfile=temp, exdir=temp2)
-
-# Read the shapefiles
-temp2 <- paste0(temp2, "\\", list.files(temp2),'\\data')
-sf.birds <- read_sf(temp2)%>%
-  as.data.frame()%>%
-  st_as_sf(coords=c('Long', 'Lat'))
-```  
-
-What are we working with here?
-```{r}
-head(sf.birds)
+The data is from the GPS collar of a single  buffalo ("Toni") in South Africa
+```{r, message=FALSE, warning=FALSE}
+sf.toni <- st_as_sf(toni, coords = c("long","lat"))
+head(sf.toni)
 ```
-Simple visualization:
-```{r, warning=FALSE, message=FALSE}
+The essential parts of GPS tracking data is the GPS coordinates (long, lat etc), a time stamp (date, time), and ID of the animal (especially important if there are multiple individuals being tracked)
 
+Visualize:  
+```{r, warning=FALSE, message = FALSE}
+sf.toni$date <-as.Date(as.POSIXct(sf.toni$timestamp.utc, tz="UTC")) #convert times to POSIX
 
+bbox = c(left=min(toni$long - 0.05),right=max(toni$long) + 0.05, #longitude
+             top=max(toni$lat) + 0.05,bottom=min(toni$lat) -0.05) #latitude
 
-sf.birds <- cbind(sf.birds, as.data.frame(st_coordinates(sf.birds)))
-bbox = c(left=min(sf.birds$X- 0.02),right=max(sf.birds$X +0.02), #longitude
-             top=max(sf.birds$Y + 0.02),bottom=min(sf.birds$Y - 0.02)) #latitude
 
 #Open street maps
 basemap <- ggmap(get_stamenmap(maptype='terrain', 
                             bbox=bbox,
                             zoom=12)) 
+basemap+
+  theme_void()+
+  geom_sf(data=sf.toni, aes(color=date), inherit.aes = FALSE)
 
-basemap +
-  geom_sf(data=sf.birds, aes(color=ID), inherit.aes=FALSE)
 ```
 
-## Homerange
 
-### Locoh
 
-### KDE
+### Kernel density estimation  
+Estimates density of spatial points within a given area; a smooth curve is fit over each point and then the height of these curves are summed over the space. 
 
+refs:  
+
++ [ks package](https://rdrr.io/cran/ks/f/inst/doc/kde.pdf)
+
+```{r, warning=FALSE, message=FALSE}
+library(ks)
+
+coords <- st_coordinates(sf.toni)
+H.scv <- Hscv(x=coords) #Smoothed cross-validation (SCV) bandwidth selector
+NumGridLines =10
+
+min.x <- bbox[["left"]]
+min.y <- bbox[["bottom"]]
+max.x <- bbox[["right"]]
+max.y <- bbox[["top"]]
+
+fhat <- ks::kde(x=coords, H=H.scv, gridsize=NumGridLines, binned=TRUE,
+                    xmin=c(min.x, min.y), 
+                    xmax=c(max.x, max.y)) #kernel density estimater
+
+#Function to extract contour polygons
+Fx_ExtractContour <-  function(fhat, ContourLine){
+  #Get a few other contours 
+  contour.x <- with(fhat,contourLines(x=eval.points[[1]],y=eval.points[[2]],
+                                      z=estimate,levels=cont[ContourLine])[[1]]) 
+  poly.x <- with(contour.x, data.frame(x,y))
+  poly.x <- rbind(poly.x,poly.x[1,])    # close polygon
+  poly.x <- as.data.frame(poly.x) %>%
+    mutate(contour = ContourLine) %>%
+    sfheaders::sf_polygon(x="x", y="y", polygon_id="contour")
+  
+  return(poly.x)
+}
+
+contours <- rbind(
+  Fx_ExtractContour(fhat, "99%"),
+  Fx_ExtractContour(fhat, "95%"),
+  Fx_ExtractContour(fhat, "75%"),
+  Fx_ExtractContour(fhat, "50%"),
+  Fx_ExtractContour(fhat, '10%')
+  )
+
+Pal <- c("99%"="red4","95%"="red2", "75%"="orange3", "50%"="goldenrod3", "10%"="lightgoldenrod3")
+basemap + 
+  geom_sf(data=contours, aes(fill=contour), inherit.aes = FALSE, alpha = 0.6, color=NA)+
+  scale_fill_manual(values = Pal, name= "Contour density") +
+    geom_sf(data=sf.toni, inherit.aes = FALSE, size =0.01)
+
+```
+
+### t-LoCoH  
+This is the code provided in the t-locoh R package starting tutorial. For more detail, visit the [t-locoh pacakge website](https://tlocoh.r-forge.r-project.org/). 
+
+Refs:  
+
++ LoCoH: [Lyons et al, 2013](https://movementecologyjournal.biomedcentral.com/articles/10.1186/2051-3933-1-2)  
++ R package ['tlocoh'](https://tlocoh.r-forge.r-project.org/)   
++ [tlocoh tutorial](https://tlocoh.r-forge.r-project.org/tlocoh_tutorial_2014-08-17.pdf) we are following  
+
+*Note: the package we are using is based on the 'sp' r spatial pacakge*  
+
+Format data for t-locoh  
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+#convert to sp object, set projection and timezones
+toni.sp.latlong <- SpatialPoints(toni[ , c("long","lat")], proj4string=CRS("+proj=longlat +ellps=WGS84")) #sp object
+toni.sp.utm <- spTransform(toni.sp.latlong, CRS("+proj=utm +south +zone=36
++ellps=WGS84")) #convert to utm
+toni.mat.utm <- coordinates(toni.sp.utm) #extract coords
+colnames(toni.mat.utm) <- c("x","y")
+toni.gmt <- as.POSIXct(toni$timestamp.utc, tz="UTC") #convert times to POSIX
+local.tz <- "Africa/Johannesburg" #specify timezon
+toni.localtime <- as.POSIXct(format(toni.gmt, tz=local.tz), tz=local.tz)
+
+#convert to locoh object
+toni.lxy <- xyt.lxy(xy=toni.mat.utm, dt=toni.localtime, id="toni",
+proj4string=CRS("+proj=utm +south +zone=36 +ellps=WGS84"))
+
+```
+
+
+Create hullsets:
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+toni.lxy <- lxy.nn.add(toni.lxy, s=0.003, k=25) #find nearest neighbors
+toni.lhs <- lxy.lhs(toni.lxy, k=15, s=0.003) #create hulls
+```
+
+Create isopleths (aggregated hulls):  
+```{r, results=FALSE, warning=FALSE, message=FALSE}
+toni.lhs <- lhs.iso.add(toni.lhs) #add iso layers
+toni.lhs.k15 <- lhs.select(toni.lhs, k=15) #select the k=15 for analysis
+toni.lhs.k15 <- lhs.ellipses.add(toni.lhs.k15) #add ellipses
+toni.lhs.k15 <- lhs.iso.add(toni.lhs.k15, sort.metric="ecc") #calculate eccentricity
+toni.lhs.k15 <- lhs.visit.add(toni.lhs.k15, ivg=3600*12) #cycle period
+```
+
+Visualize how the algorthm works
+```{r}
+plot(toni.lhs.k15, hulls=T, ellipses=T, allpts=T, nn=T, ptid="auto")
+
+```  
+
+*Density isopleths (aggregated hulls by density of points)*
+```{r}
+plot(toni.lhs, iso=T, k=15, allpts=T, cex.allpts=0.1, col.allpts="gray30",
+ufipt=F); plot(toni.lhs, iso=T, k=15, ufipt=F)
+```
+
+
+*Eccentricity isopleths (aggregated hulls by eccentricity of ellipses)*
+```{r}
+plot(toni.lhs.k15, iso=T, iso.sort.metric="ecc")
+```
+
+*Revistiation rate (frequency of visit to sites)*
+```{r}
+#hist(toni.lhs.k15, metric="nsv")
+plot(toni.lhs.k15, hpp=T, hpp.classify="nsv", ivg=3600*12, col.ramp="rainbow")
+```  
+
+*Duration rate (length of time at each site)*
+```{r}
+ plot(toni.lhs.k15, hpp=T, hpp.classify="mnlv", col.ramp="rainbow")
+```
+
+*Revistiation vs duration*
+```{r}
+hsp <- lhs.plot.scatter(toni.lhs.k15, x="nsv", y="mnlv", col="spiral",
+bg="black"); plot(toni.lhs.k15, hpp=T, hsp=hsp, hpp.classify="hsp")
+
+```  

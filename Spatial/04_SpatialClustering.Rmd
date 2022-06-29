@@ -1,0 +1,238 @@
+---
+title: "Spatial epidemiology"
+author: "B. Raynor"
+date: "6/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, warning=FALSE, message=FALSE}
+rm(list = ls()) 
+```
+
+
+### Identifying clustering   
+
+**Definitions:**  
+
++ Cluster:  an aggregation of cases grouped in place and time that are suspected to be greater than the number expected, even though the expected number may not be known  [CDC](https://www.cdc.gov/csels/dsepd/ss1978/lesson1/section11.html#:~:text=Outbreak%20carries%20the%20same%20definition,number%20may%20not%20be%20known))  
+
++ Epidemic: an increase, often sudden, in the number of cases of a disease above what is normally expected in that population in that area  [CDC](https://www.cdc.gov/csels/dsepd/ss1978/lesson1/section11.html#:~:text=Outbreak%20carries%20the%20same%20definition,number%20may%20not%20be%20known))  
+
++ Outbreak: Same as an epidemic, but is often used for a more limited geographic area  [CDC](https://www.cdc.gov/csels/dsepd/ss1978/lesson1/section11.html#:~:text=Outbreak%20carries%20the%20same%20definition,number%20may%20not%20be%20known))  
+
++ Hot spot: less strictly defined... [Lessler et al](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5462559/) "In infectious disease epidemiology, “hotspot” is frequently used to refer to areas of elevated disease burden or high transmission efficiency." 
+
+#### **scan statistic**  
+A statistic used to evaluate spatial/temporal clusters:  
+*"The circular spatial scan statistic is defined through a large number of overlapping circles [18]. For each circle z, a log likelihood ratio LLR(z) is calculated, and the test statistic is defined as the maximum LLR over all circles. The scanning window will depend on the application"* -[Kulldorff et al](https://ij-healthgeographics.biomedcentral.com/articles/10.1186/1476-072X-8-58)
+
++ Free online software Ricardo recommended [SaTScan](https://www.satscan.org/).  
+
++ [rflexscan R package](https://www.jstatsoft.org/article/view/v099i13)
+
+Code below is adapted from [rflexscan](https://www.jstatsoft.org/article/view/v099i13) R package code and accompanying paper 
+```{r, warning=FALSE, message=FALSE}
+library("rgdal")
+library("spdep")
+library("rflexscan")
+library("RColorBrewer")
+
+# for replication
+set.seed(12345)
+
+
+## ----load NYS cancer data-----------------------------------------------------
+# Download data
+temp <- tempfile()
+download.file("https://www.satscan.org/datasets/nyscancer/NYS_Cancer.zip", temp)
+unzip(temp, exdir = "NYS_Cancer")
+
+nys <- readOGR("NYS_Cancer/NYSCancer_region.shp",
+               stringsAsFactors = FALSE, verbose=FALSE)
+
+
+## ----figure 1-----------------------------------------------------------------
+manhattan <- nys[grep("36061", nys$DOHREGION),]
+SIR <- manhattan$OBREAST / manhattan$EBREAST
+nsteps <- 7
+brks <- c(0, 1.0, 1.2, 1.4, 1.6, 1.8, 2, 10)
+brks[1] <- 0
+cols <- colorRampPalette(c("white","royal blue"))(nsteps)
+grps <- as.ordered(cut(SIR, brks, include.lowest = TRUE))
+par(mar = c(1, 1, 1, 1), oma = c(1, 1, 1, 1))
+plot(manhattan, col=cols[unclass(grps)], lwd = 0.1)
+box()
+legend("topleft",
+  legend = c("> 2.00", "1.80 - 2.00", "1.60 - 1.80",
+    "1.40 - 1.60", "1.20 - 1.40", "1.00 - 1.20", "< 1.00"), 
+  fill=rev(cols), bty="n") 
+```
+
+*"Figure 1: Standardized incidence ratios of breast cancer (female) in the Manhattan borough
+of New York City for the years 2005–2009 based on the 2010 census counts."* [Otani and Takahashi, 2001](https://www.jstatsoft.org/article/view/v099i13)
+
+```{r,warning=FALSE, message=FALSE}
+## ----extract Manhattan data---------------------------------------------------
+manhattan <- nys[startsWith(nys$DOHREGION, "36061"),]
+
+
+## ----transformation-----------------------------------------------------------
+coord <- data.frame(x=manhattan$LONGITUDE, y=manhattan$LATITUDE)
+coordinates(coord) <- c("x", "y")
+proj4string(coord) <- proj4string(manhattan)
+coord <- spTransform(coord, CRS("+init=epsg:32618"))
+
+
+## ----make a neighbors list----------------------------------------------------
+nb <- poly2nb(manhattan, queen = T)
+
+
+## ----figure 4-----------------------------------------------------------------
+par(mar = c(0.5, 0.5, 0.5, 0.5), oma = c(0.5, 0.5, 0.5, 0.5))
+plot(manhattan, border = "white", col = "white", lwd=0.2)
+plot(nb, cbind(manhattan$LONGITUDE, manhattan$LATITUDE), 
+     col="darkgrey", add=TRUE, lwd=0.2, cex=0.1)
+box()
+
+```
+
+*"Figure 4: Connections via poly2nb."* [Otani and Takahashi, 2001](https://www.jstatsoft.org/article/view/v099i13)
+
+```{r, warning=FALSE, message=FALSE}
+## ----run rflexscan------------------------------------------------------------
+fls <- rflexscan(name = manhattan$DOHREGION,
+  x = coord$x, y = coord$y, nb = nb,
+  observed = manhattan$OBREAST, expected = manhattan$EBREAST)
+summary(fls)
+```  
+
+^printed out chart of the underlying statistics calculated
+
+```{r, warning=FALSE, message=FALSE}
+## ----figure 6(a)--------------------------------------------------------------
+par(mar = c(0.5, 0.5, 0.5, 0.5),
+  oma = c(0.5, 0.5, 0.5, 0.5), lwd = 0.5, xaxt = 'n', yaxt = 'n')
+plot(fls, rank = 1:7, edge.width = 0.5, col = brewer.pal(7, "RdYlBu"))
+box(lwd = 1)
+legend("topleft", legend = 1:7, fill = brewer.pal(7, "RdYlBu"), bty="n")
+
+
+## ----figure 6(b)--------------------------------------------------------------
+par(mar = c(0.5, 0.5, 0.5, 0.5),
+    oma = c(0.5, 0.5, 0.5, 0.5), xaxt = 'n', yaxt = 'n')
+choropleth(manhattan, fls, rank = 1:7, col = brewer.pal(7, "RdYlBu"))
+legend("topleft", legend = 1:7, fill = brewer.pal(7, "RdYlBu"), bty="n")
+
+
+
+
+```
+
+*Figure 6: Significant clusters via the flexible scan statistic with the restricted likelihood ratio (p < 0.05).* [Otani and Takahashi, 2001](https://www.jstatsoft.org/article/view/v099i13)
+
+#### **Spatial relative risk**  
+
++ Relative risk compares the risk of a health event (disease, injury, risk factor, or death) among one group with the risk among another group. [CDC](https://www.cdc.gov/csels/dsepd/ss1978/lesson3/section5.html#:~:text=A%20risk%20ratio%20(RR)%2C,the%20risk%20among%20another%20group)
+
++ Spatial relative risk is the ratio of densities describing spatial distribution of cases and controls. [Fernando and Hazelton, 2014](https://www.sciencedirect.com/science/article/abs/pii/S1877584513000555)
+
+The following code is adapted from a  [tutorial](https://onlinelibrary.wiley.com/doi/10.1002/sim.7577) using the sparr R package and calculates RR based on KDE (same method used to find HR last week applied in a different context)
+
+```{r, message=FALSE, warning=FALSE}
+### Section 1 ###
+library("sparr")
+
+#-- Figure 1
+data(pbc)
+pbccas <- split(pbc)$case
+pbccon <- split(pbc)$control
+
+par(mfrow=c(1,2))
+plot(pbccas,cex=.7,main="cases");box(bty="l");axis(1);axis(2)
+title(ylab="Northing",xlab="Easting")
+plot(pbccon,cex=.7,pch=5,main="controls");box(bty="l");axis(1);axis(2)
+title(ylab="Northing",xlab="Easting")
+```
+
+*Figure 1: Primary biliary cirrhosis cases and sampled at-risk controls in a geographical region of northeast England* [Davies et al](https://onlinelibrary.wiley.com/doi/10.1002/sim.7577)  
+
+```{r, warning=FALSE, message=FALSE}
+
+#set common bandwith
+hfix <- LSCV.risk(f=pbccas,g=pbccon, verbose = FALSE)
+
+#compute fixed bandwidth estimate of PBC risk
+f.tilde <- bivariate.density(pbccas,h0=hfix)
+g.tilde <- bivariate.density(pbccon,h0=hfix)
+rho.tilde <- risk(f=f.tilde,g=g.tilde)
+pval.tilde <- tolerance(rs=rho.tilde,method="MC",ITER=200, verbose=FALSE)
+
+# figure 5
+plot(rho.tilde,xlab="Easting",ylab="Northing")
+tol.contour(pim=pval.tilde,levels=c(0.01,0.05),lty=1:2,add=TRUE) #-- Figure 5 (right)
+```
+
+*Figure 5: Fixed-bandwidth spatial log-relative risk surfaces of the primary biliary cirrhosis (PBC) data estimated using sparr. Depicted is the recomputed estimate based on a jointly optimal, common case-control bandwidth found using LSCV.risk, as well as tolerance contours depicting significantly elevated risk of PBC calculated by Monte-Carlo simulations using tolerance. LSVC, least squares cross-validation* [Davies et al](https://onlinelibrary.wiley.com/doi/10.1002/sim.7577)  
+
+```{r, warning=FALSE, message=FALSE}
+#Adaptive bandwidth
+hpilot.f <- BOOT.density(pbccas, verbose=FALSE)
+hpilot.g <- BOOT.density(pbccon, verbose=FALSE)
+h0 <- OS(pbc,nstar="geometric")
+rho.hat1 <- risk(f=pbccas,g=pbccon,h0=h0,adapt=TRUE,hp=c(hpilot.f,hpilot.g),tolerate=TRUE)
+
+plot(rho.hat1,zlim=c(-3.1,1.1),tol.args=list(levels=c(0.01,0.05),lty=1:2),xlab="Easting",ylab="Northing") #-- Figure 6 (left)
+```
+
+*Figure 6: Adaptive bandwidth spatial log-relative risk surfaces of the primary biliary cirrhosis (PBC) data estimated using sparr, withasymptotic (ASY) tolerance contours displayed. Method- an asymmetric estimate based on bootstrap-estimated pilot bandwidths and an over smoothing global bandwidth calculated using the pooled data.* [Davies et al](https://onlinelibrary.wiley.com/doi/10.1002/sim.7577)   
+
+### Identifying spatial autocorrelation  
+**Definitions:** 
+
++ Instead of a given variable (attribute) being distributed randomly across space, positive spatial autocorrelation indicates that spatially adjacent observations tend to have more similar data values [Haining 2001](https://www.sciencedirect.com/science/article/pii/B0080430767025110)
+
+#### **Moran's I**  
+Moran's I is a statistic that measures spatial autocorrelation. [More info](https://www.statisticshowto.com/morans-i/). 
+
+[Tutorial source](https://mgimond.github.io/Spatial/spatial-autocorrelation-in-r.html)
+
+```{r, warning=FALSE, message=FALSE}
+library(tmap)
+library(spdep)
+
+load(url("https://github.com/mgimond/Spatial/raw/main/Data/moransI.RData"))
+
+#visualize income distribution
+map1<- tm_shape(s1) +
+  tm_polygons(style="quantile", col ="Income") +
+  tm_legend(outside = TRUE, text.size = .8) 
+
+#define neigbors
+nb <- poly2nb(s1, queen=TRUE)
+
+#Assign weights to neigboring polygons
+lw <- nb2listw(nb, style="W", zero.policy=TRUE)
+
+#compute average neighbor income value for each polygon
+Inc.lag <- lag.listw(lw, s1$Income)
+
+#calculate moran's I statistic
+I1 <- moran.test(s1$Income,lw) # analytic solution for p-val
+
+#Monte Carlo sim value for p-value
+I2 <- moran.mc(s1$Income, lw, nsim=599)
+
+
+map1; I1; I2
+```   
+
+Interpretation: The Moran's I test statistic (0.283) is positive suggesting weak to moderate spatial clustering at a significant p-val (0.012-analytic,  0.027-MC).  
+
+
+#### **Oden's Ipop**  
+Oden's I is an adjustment to Moran's I that takes into account the underlying population density [Oden, 1995](https://pubmed.ncbi.nlm.nih.gov/7701154/).
+-no real code for this online... need to look up the derivation and code manually. Will do when I have more time. 

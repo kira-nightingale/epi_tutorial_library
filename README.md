@@ -51,6 +51,22 @@ and analysis.*
     example using freely accessible data on hospital locations in the
     city of Philadelphia.
 
+03\_GPStracking
+
+-   The .Rmd file is the R markdown code and the .html file is the
+    rendered html output.
+
+-   R code for estimating home range from GPS tracking data using KDE
+    and t-locoh.
+
+04\_SpatialClustering
+
+-   The .Rmd file is the R markdown code and the .html file is the
+    rendered html output.
+
+-   R code for estimating spatial epi statistics including scan
+    statistics for clustering, relative risk, and Moran’s I.
+
 **TransmissionModels/**  
 *A folder of sample codes for mathematical models of infectious disease
 transmission.*

@@ -34,11 +34,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### June 29, 2022  
 
-+ Topic: Classic spatial epi: spatial odds ratios, clustering, morans I/oden's Ipop, spatial scatistic (scan.stat) etc  
++ Topic: Classic spatial epi: relative risk, clustering, morans I/oden's Ipop, scan statistic  
 
-+ [Tutorial link]()
 
-+ [Code link]()
++ [Tutorial link](https://rpubs.com/bhraynor/SpatialEpi)
+
++ [Code link](https://github.com/bhraynor/epi_tutorial_library/blob/main/Spatial/04_SpatialClustering.Rmd)
 
 ### July 6, 2022
 

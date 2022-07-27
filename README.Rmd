@@ -69,6 +69,24 @@ Summer2022Schedule
 
 + This [tutorial](https://rpubs.com/bhraynor/MetapopulationModel) runs through 2 examples look at systems with 3 patches coupled in different configurations.   
 
+06_StochasticSIR  
+
++ The .Rmd file is the R markdown code and the .html file is the rendered html output.  
+
++ R code for a simple, stochastic SIR model.  
+
++ This [tutorial](https://rpubs.com/bhraynor/StochasticSIR) runs through stochastic simulation code for a simple SIR model. 
+
+
+07_MetapopulationModel 
+
++ The .Rmd file is the R markdown code and the .html file is the rendered html output.  
+
++ R code for metropolis hasting sampler to estimate parameters for simulated SIR data.
+
++ This [tutorial](https://rpubs.com/bhraynor/SIRinference) corresponds to the code. 
+
+
 SIR_schematic.png 
 
 + Simple flow chart schematic of SIR metapopulation system used in 05_MetapopulationModel code. 

@@ -88,6 +88,27 @@ transmission.*
     through 2 examples look at systems with 3 patches coupled in
     different configurations.
 
+06\_StochasticSIR
+
+-   The .Rmd file is the R markdown code and the .html file is the
+    rendered html output.
+
+-   R code for a simple, stochastic SIR model.
+
+-   This [tutorial](https://rpubs.com/bhraynor/StochasticSIR) runs
+    through stochastic simulation code for a simple SIR model.
+
+07\_MetapopulationModel
+
+-   The .Rmd file is the R markdown code and the .html file is the
+    rendered html output.
+
+-   R code for metropolis hasting sampler to estimate parameters for
+    simulated SIR data.
+
+-   This [tutorial](https://rpubs.com/bhraynor/SIRinference) corresponds
+    to the code.
+
 SIR\_schematic.png
 
 -   Simple flow chart schematic of SIR metapopulation system used in

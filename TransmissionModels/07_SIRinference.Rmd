@@ -74,12 +74,12 @@ df <-  as.data.frame(ode(y = init, times = times, func = disease_dynamics, parms
 ```
 
 Our resulting data that we will now try to fit parameter values is:  
-```{r, warning=FALSe, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 knitr::kable(df)
 ```
 
 Visualized:  
-```{r, warning=FALSe, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 #Create color palette
 Pal1 = c("S" = "goldenrod", 
          "I" = "red3",

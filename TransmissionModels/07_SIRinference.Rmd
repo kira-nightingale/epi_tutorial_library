@@ -1,0 +1,254 @@
+---
+title: "Inference for SIR models"
+author: "B. Raynor"
+date: "7/26/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## References 
+This code uses the MultiBD package - code example adapted from package [vignette](Tutorial source: https://cran.r-project.org/web/packages/MultiBD/vignettes/SIR-MCMC.pdf)
+
+The inference in this code relies on the Metroplis Hasting sampler. This is one of the work horse MCMC samplers used in Bayesian statistics. There are a ton of resources and lectures online that detail MH samplers if you want to learn more about the statistics.  
+
++ [Very cited paper](https://eml.berkeley.edu/reprints/misc/understanding.pdf)
++ [Tutorial w/ R code](https://www.aptech.com/resources/tutorials/bayesian-fundamentals/metropolis-hastings-sampler/)
++ [Youtube video tutorial](https://www.youtube.com/watch?v=yCv2N7wGDCw&ab_channel=ritvikmath)
+
+## Code
+
+```{r, warning=FALSE, message=FALSE}
+#clear environment
+rm(list = ls()) 
+
+#install.packages("MultiBD")
+#install.packages("MCMCpack", repos = 'http://cran.us.r-project.org')
+#install.packages("BiocManager")
+
+#load packages
+library(MultiBD)
+library(BiocManager)
+library(MCMCpack)
+library(dplyr)
+library(ggplot2)
+library(deSolve)
+```
+
+
+First, we will simulate data that we know the true parameter values of. Here is a simple SIR model with $\beta = 0.02$ and $\alpha = 2$ with some random noise added.  
+```{r, warning=FALSE, message=FALSE}
+#Set initial conditions
+init <- c(S=200, I=5, R=0)  # popn initial values
+parameters <- c(b= 0.02,
+                a=2)
+
+#set time series
+times <- seq(0, 4, by = 0.5) #unit=days, seq(start day, end day, step)
+
+#Model function
+disease_dynamics <- function(time, state, parameters) {
+  with(
+    as.list(c(state, parameters)), {
+      #Equations
+      dS <- - b*S*I
+      dI <- b*S*I - a*I 
+      dR <- a*I
+      
+      return(list(c(dS, dI, dR)))
+    }
+  )
+}
+
+set.seed(123)
+df <-  as.data.frame(ode(y = init, times = times, func = disease_dynamics, parms = parameters))%>%
+  mutate(S= round(S + rnorm(length(times), 0,1)),
+         I= round(I + rnorm(length(times), 0,1)),
+         R= round(R + rnorm(length(times), 0,1)))%>%
+  mutate(S=ifelse(S < 0, 0, S),
+         I= ifelse(I < 0, 0, I),
+         R= ifelse(R < 0, 0, R)
+         )
+```
+
+Our resulting data that we will now try to fit parameter values is:  
+```{r, warning=FALSe, message=FALSE}
+knitr::kable(df)
+```
+
+Visualized:  
+```{r, warning=FALSe, message=FALSE}
+#Create color palette
+Pal1 = c("S" = "goldenrod", 
+         "I" = "red3",
+         "R" = "dodgerblue3")
+
+#plot
+fig <- ggplot() +
+  theme_classic()+
+  geom_point(data=df, aes(x=time, y=S, color="S"), size=3)+
+  geom_point(data=df, aes(x=time, y=I, color="I"), size=3)+
+  geom_point(data=df, aes(x=time, y=R, color="R"), size=3)+
+  geom_line(data=df, aes(x=time, y=S, color="S"), size=1, linetype = "dotted")+
+  geom_line(data=df, aes(x=time, y=I, color="I"),linetype = "dotted", size=1)+
+  geom_line(data=df, aes(x=time, y=R, color="R"),linetype = "dotted", size=1)+
+  scale_color_manual(values=Pal1, name="Disease state")+
+  theme(text = element_text(size = 20))+
+  ylab("Number of individuals") + xlab("Time")
+fig
+```
+
+
+To fit the 'unknown' parameter values, we will use the metropolis hasting algorithm. 
+
+Specify functions for Metropolis hasting
+```{r, warning=FALSE, message=FALSE}
+#log liklihood of SIR
+loglik_sir <- function(param, data) {
+  alpha <- exp(param[1]) # Rates must be non-negative
+  beta <- exp(param[2])
+  # Set-up SIR model
+  drates1 <- function(a, b) { 0 }
+  brates2 <- function(a, b) { 0 }
+  drates2 <- function(a, b) { alpha * b }
+  trans12 <- function(a, b) { beta * a * b }
+  sum(sapply(1:(nrow(data) - 1), # Sum across all time steps k
+  function(k) {
+    log(
+    dbd_prob( # Compute the transition probability matrix
+    t = data$time[k + 1] - data$time[k], # Time increment
+    a0 = data$S[k], b0 = data$I[k], # From: S(t_k), I(t_k)
+    drates1, brates2, drates2, trans12,
+    a = data$S[k + 1], B = data$S[k] + data$I[k] - data$S[k + 1],
+    computeMode = 4, nblocks = 80 # Compute using 4 threads
+    )[1, data$I[k + 1] + 1] # To: S(t_(k+1)), I(t_(k+1))
+    )
+  }))
+}
+
+#log priors for alpha and beta
+logprior <- function(param) {
+  log_alpha <- param[1]
+  log_beta <- param[2]
+  dnorm(log_alpha, mean = 0, sd = 100, log = TRUE) +
+  dnorm(log_beta, mean = 0, sd = 100, log = TRUE)
+}
+```
+
+Simulate posterior distribution via Metropolis hasting
+```{r, message = FALSE, warning=FALSE}
+set.seed(1234)
+
+#set initial conditions
+alpha0 <- 2
+beta0 <- 0.01
+
+#Find posterior sample
+post_sample <- MCMCmetrop1R(fun = function(param) { loglik_sir(param, df) + logprior(param) },
+                            theta.init = log(c(alpha0, beta0)),
+                            mcmc = 1000, burnin = 200)
+#format posterior sample
+post_sample <- post_sample%>%
+  as.data.frame()%>%
+  rename(log_alpha=V1, log_beta=V2)%>%
+  mutate(sim = 1:nrow(post_sample))
+```
+
+What does the posterior sample look like?  
+```{r, message=FALSE, warning=FALSE}
+#create color palette
+Pal2 = c("log alpha" = "goldenrod", 
+         "log beta" = "dodgerblue")
+
+Pal3 = c("alpha" = "goldenrod", 
+         "beta" = "dodgerblue")
+
+#visualize metropolis hasting steps
+fig3 <- ggplot()+
+  theme_classic()+
+  geom_line(data=post_sample, aes(y=log_alpha, x=sim, color="log alpha"))+
+  geom_line(data=post_sample, aes(y=log_beta, x=sim, color="log beta"))+
+  scale_color_manual(values=Pal2, name="Parameter")+
+  theme(text = element_text(size = 20))+
+  ylab("Parameter estimate") + xlab("Simulation number")+
+  ggtitle("Metropolis Hasting steps")
+
+#visualize posterior distributions
+fig1 <- ggplot()+
+  theme_classic()+
+  geom_histogram(data=post_sample, aes(x=exp(log_alpha), fill="alpha"), bins=30, color="black")+
+  scale_fill_manual(values=Pal3, name="Parameter")+
+  theme(text = element_text(size = 20))+
+  xlab("alpha posterior samples")
+fig2 <- ggplot()+
+  theme_classic()+
+  geom_histogram(data=post_sample, aes(x=exp(log_beta), fill="beta"), bins=30, color="black")+
+  scale_fill_manual(values=Pal3, name="Parameter")+
+  theme(text = element_text(size = 20))+
+  xlab("beta posterior samples")
+ggpubr::ggarrange(fig1, fig2, common.legend = TRUE)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4, fig.width=12}
+fig3
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.height=4, fig.width=12}
+ggpubr::ggarrange(fig1, fig2, common.legend = TRUE)
+```
+
+Examine fit:
+```{r, warning=FALSE, message=FALSE}
+#Set initial conditions
+init <- c(S=df$S[1], I=df$I[1], R=df$R[1])  # popn initial values
+parameters <- c(b= exp(mean(post_sample$log_beta)),
+                a=exp(mean(post_sample$log_alpha))
+                )
+
+#set time series
+times <- seq(0, tail(df$time, n=1), by = tail(df$time, n=1)/nrow(df)) #unit=days, seq(start day, end day, step)
+
+#Model function
+disease_dynamics <- function(time, state, parameters) {
+  with(
+    as.list(c(state, parameters)), {
+      #Equations
+      dS <- - b*S*I
+      dI <- b*S*I - a*I 
+      dR <- a*I
+      
+      return(list(c(dS, dI, dR)))
+    }
+  )
+}
+
+#Run model
+df.out <- as.data.frame(ode(y = init, times = times, func = disease_dynamics, parms = parameters))
+
+#compare parameter estimates
+fit <- data.frame(parameter = c("beta", "alpha"), 
+                  true_value=c(0.02,2),
+                  mean_post = c(exp(mean(post_sample$log_beta)), exp(mean(post_sample$log_alpha))),
+                  lower_95CI = c(quantile(exp(post_sample$log_beta), probs = c(0.025))[[1]],
+                                 quantile(exp(post_sample$log_alpha), probs = c(0.025))[[1]]),
+                  upper_95CI = c(quantile(exp(post_sample$log_beta), probs = c(0.975))[[1]],
+                                 quantile(exp(post_sample$log_alpha), probs = c(0.975))[[1]])
+                  )%>%
+  mutate(mean_post = round(mean_post, 2),
+         lower_95CI = round(lower_95CI, 2),
+         upper_95CI = round(upper_95CI, 2))
+
+knitr::kable(fit)
+```
+
+Visualize:
+```{r, warning=FALSE, message=FALSE}
+#add fit lines to data plot
+fig + 
+  geom_line(data=df.out, aes(x=times, y=S, color="S"), size=2, alpha=0.5)+ 
+  geom_line(data=df.out, aes(x=times, y=I, color="I"), size=2, alpha=0.5)+
+  geom_line(data=df.out, aes(x=times, y=R, color="R"), size=2, alpha=0.5)
+
+```

@@ -1,7 +1,7 @@
 ---
-title: "Stochastic SIR"
+title: "Stochastic SIR models"
 author: "B. Raynor"
-date: "7/20/2022"
+date: "7/27/2022"
 output: html_document
 ---
 
@@ -9,3 +9,115 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r, warning=FALSE, message=FALSE}
+#clear environment
+rm(list = ls()) 
+
+#load packages
+library(dplyr)
+library(ggplot2)
+library(deSolve)
+```  
+
+Ref: Code is adapted from this [solution in stack overflow](https://stackoverflow.com/questions/67774513/modifying-sir-model-to-include-stochasticity)
+
+Set up function: 
+```{r}
+#set initial values
+init <- c(S = 10000, I = 1, R = 0)
+times <- seq(from = 0, to = 50, by = 1)
+
+#specify function
+sir_model <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+
+    # this overwrites the parms passed via parameters
+    if (time_dependent) { 
+      beta  <- beta_p[floor(time)  + 1]
+      alpha <- alpha_p[floor(time) + 1]
+    }
+    
+    dS <- -beta* I * S/(S+I+R)
+    dI <- beta* I * S/(S+I+R) - alpha * I
+    dR <- alpha * I
+
+    list(c(dS, dI, dR))
+  })
+}
+
+```
+
+Normal ODE:
+```{r}
+parameters <- c(beta = 2, alpha = 0.1)
+df1 <- ode(y= init,
+            times = times,
+            func  = sir_model,
+            parms = c(parameters, time_dependent = FALSE))%>%
+  as.data.frame
+
+#Create color palette
+Pal1 = c("S" = "goldenrod", 
+         "I" = "red3",
+         "R" = "dodgerblue3")
+#plot
+fig <- ggplot() +
+  theme_classic()+
+  geom_line(data=df1, aes(x=time, y=S, color="S"), size=2)+
+  geom_line(data=df1, aes(x=time, y=I, color="I"), size=2)+
+  geom_line(data=df1, aes(x=time, y=R, color="R"), size=2)+
+  scale_color_manual(values=Pal1, name="Disease state")+
+  theme(text = element_text(size = 20))+
+  ylab("Number of individuals") + xlab("Time")
+fig
+```
+
+Single simulation with time varying parameters
+```{r, warning=FALSE, message=FALSE}
+beta_p <- rpois(max(times) + 1, parameters[1])
+infectious_period_p <- rpois(times + 1, 1/(parameters[2]))
+alpha_p <- 1/infectious_period_p
+
+
+df2 <- ode(y = init, times = times,
+          func = sir_model, parms = c(time_dependent = TRUE))%>%
+  as.data.frame()
+
+#plot
+ggplot() +
+  theme_classic()+
+  geom_line(data=df2, aes(x=time, y=S, color="S"), size=2)+
+  geom_line(data=df2, aes(x=time, y=I, color="I"), size=2)+
+  geom_line(data=df2, aes(x=time, y=R, color="R"), size=2)+
+  scale_color_manual(values=Pal1, name="Disease state")+
+  theme(text = element_text(size = 20))+
+  ylab("Number of individuals") + xlab("Time")
+
+```
+Repeat simulations
+```{r, warning=FALSE, message=FALSE}
+
+
+
+sim_num=10
+
+df.sims <- NULL
+for(i in 1:sim_num){
+  beta_p <- rpois(max(times) + 1, parameters[1])
+  infectious_period_p <- rpois(times + 1, 1/(parameters[2]))
+  alpha_p <- 1/infectious_period_p
+  
+  df.sim <- ode(y = init, times = times,
+          func = sir_model, parms = c(time_dependent = TRUE))%>%
+  as.data.frame() %>%
+  mutate(sim = i)
+  
+  df.sims <- rbind(df.sims, df.sim)
+}
+
+#plot
+fig +
+  geom_line(data=df.sims, aes(x=time, y=S, color="S", group=sim), alpha=0.5, size=1)+
+  geom_line(data=df.sims, aes(x=time, y=I, color="I", group=sim), alpha=0.5, size=1)+
+  geom_line(data=df.sims, aes(x=time, y=R, color="R", group=sim), alpha=0.5, size=1)
+```

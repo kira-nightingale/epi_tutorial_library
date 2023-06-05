@@ -1,0 +1,29 @@
+---
+title: "GGEB SUIP Brief Epidemiology Tutorials"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Friday, June 30
+## Introduction to Spatial Epidemiology
+
+## Mapping in R
+
+# Friday, July 7
+## GPS Data Analysis
+
+## Classic Spatial Epidemiology
+
+# Friday, July 14
+## Compartmental Models
+
+## Metapopulation Models
+
+# Friday, July 21
+## Stochastic Models
+
+## Inference for Transmission Models

@@ -1,6 +1,15 @@
 ---
 title: "GGEB SUIP Brief Epidemiology Tutorials"
-output: html_document
+author: Kira Nightingale
+output:
+  html_document:
+    code_folding: show
+    highlight: haddock
+    number_sections: no
+    theme: lumen
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
 date: "`r Sys.Date()`"
 ---
 
@@ -8,22 +17,52 @@ date: "`r Sys.Date()`"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Friday, June 30
+The purpose of these brief epidemiology tutorials is to provide students with an introduction to spatial epidemiology and infectious disease transmission models. All tutorials will be conducted using R and publicly available data. The link for the github repository containing all 2023 tutorials can be found here: [link](https://github.com/kira-nightingale/epi_tutorial_library/tree/main). The original tutorial materials were created by Brinkley Raynor, PhD in 2022, and revised by Kira Nightingale in 2023.
+
+# Session 1
+**Friday, June 30**
+
+### Mapping in R
+This tutorial covers the basics of creating maps in R via three methods: layering shape files, adding a background of imported tiles, and using leaflet to create interactive maps. Uses publicly available data on hospital locations in Philadelphia.
+
+- Tutorial link
+- Code link
+
 ## Introduction to Spatial Epidemiology
+Building on the mapping techniques in the prior tutorial, this session covers the creation of more complex maps and basic summary statistics. Uses publicly available data on litter index and trashcan locations in Philadelphia.
 
-## Mapping in R
+- Tutorial link
+- Code link
 
-# Friday, July 7
+# Session 2
+**Friday, July 7**
+
 ## GPS Data Analysis
+- Tutorial link
+- Code link
 
 ## Classic Spatial Epidemiology
+- Tutorial link
+- Code link
 
-# Friday, July 14
+# Session 3
+**Friday, July 14**
+
 ## Compartmental Models
+- Tutorial link
+- Code link
 
 ## Metapopulation Models
+- Tutorial link
+- Code link
 
-# Friday, July 21
+# Session 4
+**Friday, July 21**
+
 ## Stochastic Models
+- Tutorial link
+- Code link
 
 ## Inference for Transmission Models
+- Tutorial link
+- Code link

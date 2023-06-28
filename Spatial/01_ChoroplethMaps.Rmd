@@ -144,7 +144,7 @@ map1
 *Note: Notice how the fill color is a continuous gradient. There will be example code for discrete coloring below*  
 
 ### Explore litter index data
-Next, lets examine to the litter index data. 
+Next, lets examine the litter index data. 
 ```{r}
 head(sf.litter)
 ```  
@@ -205,7 +205,7 @@ ggplot()+
 Though this method works, it can sometimes cause problems with projections, conversions and other spatial analysis. It may be easier to convert the data to a spatial object before continuing.  
 
 ```{r}
-#Exctract projection from blocks
+#Extract projection from blocks
 crs_PHL <- st_crs(sf.census)
 
 #convert to sf object
@@ -225,7 +225,7 @@ One important use of spatial visualization is hypothesis generation. For example
 
 
 
-With ggplot, its easy to layer different spatial layers together  
+With ggplot, it's easy to layer different spatial layers together  
 ```{r}
 ggplot() + 
   theme_void()+
@@ -274,7 +274,7 @@ sf.litter0 <- sf.litter #save original sf.litter before manipulating
 #for now - thinning data for reasonable computation time
 
 set.seed(123) # set seed to replicate results when using random draws
-#randomly simple 10% of data
+#randomly sample 10% of data
 sf.litter <- sf.litter[sample(c(1:nrow(sf.litter)), round(nrow(sf.litter)/10),
                               replace = FALSE, prob = NULL),]
 # ##############################################################################
@@ -287,10 +287,10 @@ sf.litter$dist = as.numeric(st_length(sf.litter)) #take distance of intersection
 
 #format data 
 sf.litter <- sf.litter %>% 
-  filter(dist != 0)%>% #filter out point intersections (border)
+  filter(dist != 0) %>% #filter out point intersections (border)
   mutate(distscore = dist*LitterScore)%>% #distance * score number
   st_drop_geometry() %>% #drop geometry so that you can manipulate normally
-  group_by(Tract_ID)%>% # for each census tract find sums of distnace*score and distance
+  group_by(Tract_ID) %>% # for each census tract find sums of distance*score and distance
   summarise(TotalScore = sum(distscore),
             TotalDist = sum(dist))%>%
   mutate(AvgScore = TotalScore/TotalDist, #find average score over total distance
@@ -327,7 +327,7 @@ map4;map5
 map3; map5
 ```
 
-Visually, it looks like there may be some assoication with trashcan number and litter index. Now that we have everything standardly formatted, we can also run 'normal' statistics. 
+Visually, it looks like there may be some association with trashcan number and litter index. Now that we have everything formatted in a standard way, we can also run 'normal' statistics. 
 ```{r}
 df.census <- sf.census %>%
   st_drop_geometry()

@@ -1,0 +1,59 @@
+---
+title: "Mapping Exercise"
+output: html_document
+author: K Nightingale
+date: '`r Sys.Date()`'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+if(!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(dplyr, sf, ggplot2, ggmap, RColorBrewer)
+```
+
+# Mapping Practice - Heat Vulnerability and Tree Coverage
+After a recent heat wave in Philadelphia, you've become interested in the city's vulnerability to rising temperatures. You find a data resource that lists heat vulnerability by census tracts, and want to do an exploratory analysis to determine whether the presence of trees seems to be related to heat vulnerability. Generate a map incorporating these data sets and describe your findings. Can you tell much from your map? What might be some data manipulation you could try to have a more informative map?
+
+## Data Sources
+
++ Heat vulnerability: https://opendataphilly.org/datasets/heat-vulnerability-by-census-tract/
+
++ Tree inventory: https://opendataphilly.org/datasets/philadelphia-tree-inventory/
+
+## Variable Descriptions
+
++ Heat Sensitivity Index (HSI) - Sociodemographic and health factors that influence heat vulnerability. Incorporates percent of population over 65, percent of population over 25 without a high school diploma, percent of limited English-speaking households, percent of population below the federal poverty level, percent of population identifying as non-white, and percent of population over 65 and living alone, as well as the percent of adults diagnosed with asthma, COPD, CHD, diabetes, obesity, and hypertension.
+
++ Heat Exposure Index (HEI) - Environmental factors that influence heat vulnerability. Incorporates land surface temperature, night land surface temperature, reflectivity, buildings, vegetation, and plant health.
+
++ Heat Vulnerability Index (HVI) - Combines aspects of the HSI and HEI to indicate the population's exposure and sensitivity to heat.
+
+```{r load data}
+#Heat data
+url_heat <- "https://opendata.arcgis.com/api/v3/datasets/ee1f9ce6aa6f41f08fcdfa5101f203d7_0/downloads/data?format=shp&spatialRefId=4326&where=1%3D1"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url_heat, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.heat <- read_sf(temp2)
+
+#Tree data
+url_tree <- "https://opendata.arcgis.com/api/v3/datasets/5abe042f2927486891c049cf064338cb_0/downloads/data?format=shp&spatialRefId=4326&where=1%3D1"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url_tree, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.tree <- read_sf(temp2)
+  
+```

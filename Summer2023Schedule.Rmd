@@ -34,6 +34,11 @@ Building on the mapping techniques in the prior tutorial, this session covers th
 - Tutorial link
 - Code link
 
+## Practice Exercise
+
+- Code link
+- Solution (will be added later)
+
 # Session 2
 **Friday, July 7**
 

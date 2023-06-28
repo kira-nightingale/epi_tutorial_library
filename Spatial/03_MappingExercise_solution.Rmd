@@ -1,0 +1,123 @@
+---
+title: "03_MappingExercise"
+output: html_document
+author: K Nightingale
+date: '`r Sys.Date()`'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+if(!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(dplyr, sf, ggplot2, ggmap, RColorBrewer)
+```
+
+# Mapping Practice - Heat Vulnerability and Tree Coverage
+After a recent heat wave in Philadelphia, you've become interested in the city's vulnerability to rising temperatures. You find a data resource that lists heat vulnerability by census tracts, and want to do an exploratory analysis to determine whether the presence of trees seems to be related to heat vulnerability. Generate a map incorporating these data sets and describe your findings. Can you tell much from your map? What might be some data manipulation you could try to have a more informative map?
+
+## Data Sources
+
++ Heat vulnerability: https://opendataphilly.org/datasets/heat-vulnerability-by-census-tract/
+
++ Tree inventory: https://opendataphilly.org/datasets/philadelphia-tree-inventory/
+
+## Variable Descriptions
+
++ Heat Sensitivity Index (HSI) - Sociodemographic and health factors that influence heat vulnerability. Incorporates percent of population over 65, percent of population over 25 without a high school diploma, percent of limited English-speaking households, percent of population below the federal poverty level, percent of population identifying as non-white, and percent of population over 65 and living alone, as well as the percent of adults diagnosed with asthma, COPD, CHD, diabetes, obesity, and hypertension.
+
++ Heat Exposure Index (HEI) - Environmental factors that influence heat vulnerability. Incorporates land surface temperature, night land surface temperature, reflectivity, buildings, vegetation, and plant health.
+
++ Heat Vulnerability Index (HVI) - Combines aspects of the HSI and HEI to indicate the population's exposure and sensitivity to heat.
+
+
+## Analysis
+
+```{r load data}
+#Heat data
+url_heat <- "https://opendata.arcgis.com/api/v3/datasets/ee1f9ce6aa6f41f08fcdfa5101f203d7_0/downloads/data?format=shp&spatialRefId=4326&where=1%3D1"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url_heat, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.heat <- read_sf(temp2)
+
+#Tree data
+url_tree <- "https://opendata.arcgis.com/api/v3/datasets/5abe042f2927486891c049cf064338cb_0/downloads/data?format=shp&spatialRefId=4326&where=1%3D1"
+
+#download zipfile and unzip
+temp = tempfile()
+temp2 = tempfile()
+download.file(url_tree, temp, mode='wb')
+unzip(zipfile=temp, exdir=temp2)
+
+# Read the shapefiles
+sf.tree <- read_sf(temp2)
+  
+```
+
+
+```{r heat layer}
+heat_map <- ggplot () +
+      theme_void() +
+      geom_sf(data = sf.heat, aes(fill = HVI_SCORE), colour = "black", size=0.1) +
+  ggtitle("Tract polygons colored by heat vulnerability index (HVI)") +
+      scale_fill_distiller(type = "seq", palette = "OrRd", direction = 1, name= "Heat Vulnerability Index")
+heat_map
+```
+
+```{r tree layer}
+heattree_map <- ggplot () +
+      theme_void() +
+      geom_sf(data = sf.heat, aes(fill = HVI_SCORE), colour = "black", size=0.1) +
+      scale_fill_distiller(type = "seq", palette = "OrRd", direction = 1, name= "Heat Vulnerability Index") +
+      geom_sf(data = sf.tree, size=0.005, color = "lightgreen")
+heattree_map
+```
+This isn't a very informative map - it looks like there are lots of trees across the city, and plotting them obscures the HVI. A better tactic might be to calculate the number of trees per census tract, then map that side-by-side with a map of HVI.
+
+
+```{r trees per CT}
+#Append a census tract to each tree
+df.trees <- st_join(sf.tree, sf.heat, join = st_within) #Find intersections
+
+#Count number of trees per census tract and append to heat data
+sf.heat <- left_join(sf.heat,  
+          plyr::count(df.trees$GEOID10)%>% 
+            rename("GEOID10" = 'x', "TreeNumber"='freq'))%>% 
+  mutate(TreeNumber = ifelse(is.na(TreeNumber), 0, TreeNumber))
+
+tree_map <- ggplot() +
+  theme_void() +
+  geom_sf(data = sf.heat, aes(fill=TreeNumber), colour = "gray", size = 0.1) +
+  ggtitle("Tract polygons colored by number of trees")+
+  scale_fill_continuous(low = "white", high = "lightgreen", name = "Number of Trees")
+tree_map
+
+#It looks like the presence of a large park in our map area has messed with our scaling. Let's set custom limits.
+max_tree_col <- quantile(sf.heat$TreeNumber, .98, na.rm = T)
+min_tree_col <- quantile(sf.heat$TreeNumber, 0, na.rm = T)
+
+tree_map2 <- ggplot() +
+  theme_void() +
+  geom_sf(data = sf.heat, aes(fill=TreeNumber), colour = "gray", size = 0.1) +
+  ggtitle("Tract polygons colored by number of trees") +
+  scale_fill_continuous(low = "white", high = "lightgreen", name = "Number of Trees", limits = c(min_tree_col, max_tree_col))
+
+
+par(mfrow=c(1,2))
+heat_map
+tree_map2
+```
+
+It looks like there might be a relationship between number of trees in a census block and HVI. Does this relationship show up if we run a linear regression?
+
+```{r linear regression}
+summary(lm(HVI_SCORE ~ TreeNumber, data=sf.heat))
+```
+

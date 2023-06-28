@@ -25,18 +25,18 @@ The purpose of these brief epidemiology tutorials is to provide students with an
 ### Mapping in R
 This tutorial covers the basics of creating maps in R via three methods: layering shape files, adding a background of imported tiles, and using leaflet to create interactive maps. Uses publicly available data on hospital locations in Philadelphia.
 
-- Tutorial link
-- Code link
+- [Tutorial link]()
+- [Code link]()
 
 ## Introduction to Spatial Epidemiology
 Building on the mapping techniques in the prior tutorial, this session covers the creation of more complex maps and basic summary statistics. Uses publicly available data on litter index and trashcan locations in Philadelphia.
 
-- Tutorial link
-- Code link
+- [Tutorial link]()
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/01_ChoroplethMaps.Rmd)
 
 ## Practice Exercise
 
-- Code link
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/03_MappingExercise.Rmd)
 - Solution (will be added later)
 
 # Session 2

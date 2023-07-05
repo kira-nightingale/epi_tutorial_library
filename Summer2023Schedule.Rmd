@@ -25,30 +25,34 @@ The purpose of these brief epidemiology tutorials is to provide students with an
 ### Mapping in R
 This tutorial covers the basics of creating maps in R via three methods: layering shape files, adding a background of imported tiles, and using leaflet to create interactive maps. Uses publicly available data on hospital locations in Philadelphia.
 
-- [Tutorial link]()
-- [Code link]()
+- [Tutorial link](https://rpubs.com/KNightingale/SUIP2023_01)
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/01_Mapping.Rmd)
 
 ## Introduction to Spatial Epidemiology
 Building on the mapping techniques in the prior tutorial, this session covers the creation of more complex maps and basic summary statistics. Uses publicly available data on litter index and trashcan locations in Philadelphia.
 
-- [Tutorial link]()
-- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/01_ChoroplethMaps.Rmd)
+- [Tutorial link](https://rpubs.com/KNightingale/SUIP2023_2)
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/02_ChoroplethMaps.Rmd)
 
 ## Practice Exercise
 
 - [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/03_MappingExercise.Rmd)
-- Solution (will be added later)
+- [Sample Solution]("https://rpubs.com/KNightingale/1060151")
 
 # Session 2
 **Friday, July 7**
 
 ## GPS Data Analysis
-- Tutorial link
-- Code link
+Using data from a GPS collar fitted to a buffalo (Toni) in Kruger National Park, South Africa from 2005-2006, this tutorial introduces methods to analyze location data. Methods include basic plotting, kernel density estimation, and time local convex hull (t-LoCoH).
+
+- [Tutorial link]("https://rpubs.com/KNightingale/1060153")
+- [Code link]("https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/04_GPStracking.Rmd")
 
 ## Classic Spatial Epidemiology
-- Tutorial link
-- Code link
+This module covers methods that can be used to identify clusters, such as scan statistics, spatial relative risk, and Moran's I.
+
+- [Tutorial link]("https://rpubs.com/KNightingale/1060152")
+- [Code link]("https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/05_SpatialClustering.Rmd")
 
 # Session 3
 **Friday, July 14**

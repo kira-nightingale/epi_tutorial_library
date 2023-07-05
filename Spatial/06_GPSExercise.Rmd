@@ -1,0 +1,49 @@
+---
+title: "GPS Analysis Exercise"
+output: html_document
+author: K Nightingale
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+if(!require('pacman')) {
+  install.packages('pacman')
+}
+pacman::p_load(tlocoh, sp, rgdal, rgeos, sf, ggmap, dplyr)
+```
+
+# GPS Data Practice - Bird Migration
+
+```{r load data}
+bird <- read.csv("bird_migration.csv", header = T)
+
+#Remove unnecessary variables
+bird <- bird %>%
+  select(bird_name, date_time, latitude, longitude) %>%
+  filter(latitude > 49) %>%
+  filter(longitude > -0.5)
+
+#Make shape file
+sf.bird <- st_as_sf(bird, coords = c("longitude","latitude"))
+
+#Convert date to POSIX
+sf.bird$date <-as.Date(as.POSIXct(sf.bird$date_time, tz="GMT"))
+```
+
+
+```{r mapping}
+#Setting bounds for base map
+bbox = c(left=min(bird$longitude - 0.05),right=max(bird$longitude) + 0.05, #longitude
+             top=max(bird$latitude) + 0.05,bottom=min(bird$latitude) -0.05) #latitude
+
+#Getting base map
+basemap <- ggmap(get_stamenmap(maptype='terrain', 
+                            bbox=bbox,
+                            zoom=10)) 
+
+
+basemap+
+  theme_void()+
+  geom_sf(data=sf.bird, aes(color=bird_name), inherit.aes = FALSE)
+```
+

@@ -13,9 +13,11 @@ if(!require('pacman')) {
 }
 pacman::p_load(dplyr, sf, ggplot2, ggmap, RColorBrewer)
 ```
+This document contains one possible set of solutions to the mapping question posed below. There are many ways to code maps and approach problems like this, so what's listed below is just one example.
+
 
 # Mapping Practice - Heat Vulnerability and Tree Coverage
-After a recent heat wave in Philadelphia, you've become interested in the city's vulnerability to rising temperatures. You find a data resource that lists heat vulnerability by census tracts, and want to do an exploratory analysis to determine whether the presence of trees seems to be related to heat vulnerability. Generate a map incorporating these data sets and describe your findings. Can you tell much from your map? What might be some data manipulation you could try to have a more informative map?
+After a recent heat wave in Philadelphia, you've become interested in the city's vulnerability to rising temperatures. You find a data resource that lists heat vulnerability by census tracts, and want to do an exploratory analysis to determine whether the presence of trees seems to be related to heat vulnerability. Generate a map incorporating these data sets and describe your findings. Can you tell much from your map? What might be some data manipulation you could try to have a more informative map? (Note: This isn't a great question to address using these variables, because HVI incorporates vegetation into its calculation. But it works well for the sake of illustration.)
 
 ## Data Sources
 
@@ -115,7 +117,7 @@ heat_map
 tree_map2
 ```
 
-It looks like there might be a relationship between number of trees in a census block and HVI. Does this relationship show up if we run a linear regression?
+It looks like there might be a relationship between number of trees in a census block and HVI. Does this relationship show up if we run a linear regression? (Caveat - this assumes that all of the assumptions of a linear model hold, which I'm not going to address in this example.)
 
 ```{r linear regression}
 summary(lm(HVI_SCORE ~ TreeNumber, data=sf.heat))

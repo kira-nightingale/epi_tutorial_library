@@ -16,8 +16,8 @@ Load packages
 #clear environment
 rm(list = ls()) 
 
-# install.packages("tlocoh", dependencies=T, repos=c("http://R-Forge.R-project.org" ,
-# "http://cran.cnr.berkeley.edu"))
+install.packages("tlocoh", dependencies=T, repos=c("http://R-Forge.R-project.org" ,
+"http://cran.cnr.berkeley.edu"))
 library(tlocoh)
 library(sp)
 library(rgdal)
@@ -35,7 +35,7 @@ The data is from the GPS collar of a single  buffalo ("Toni") in South Africa
 sf.toni <- st_as_sf(toni, coords = c("long","lat"))
 head(sf.toni)
 ```
-The essential parts of GPS tracking data is the GPS coordinates (long, lat etc), a time stamp (date, time), and ID of the animal (especially important if there are multiple individuals being tracked)
+The essential parts of GPS tracking data are the GPS coordinates (long, lat, etc.), a time stamp (date, time), and ID of the animal (especially important if there are multiple individuals being tracked)
 
 Visualize:  
 ```{r, warning=FALSE, message = FALSE}
@@ -155,7 +155,7 @@ toni.lhs.k15 <- lhs.iso.add(toni.lhs.k15, sort.metric="ecc") #calculate eccentri
 toni.lhs.k15 <- lhs.visit.add(toni.lhs.k15, ivg=3600*12) #cycle period
 ```
 
-Visualize how the algorthm works
+Visualize how the algorithm works
 ```{r}
 plot(toni.lhs.k15, hulls=T, ellipses=T, allpts=T, nn=T, ptid="auto")
 
@@ -184,7 +184,7 @@ plot(toni.lhs.k15, hpp=T, hpp.classify="nsv", ivg=3600*12, col.ramp="rainbow")
  plot(toni.lhs.k15, hpp=T, hpp.classify="mnlv", col.ramp="rainbow")
 ```
 
-*Revistiation vs duration*
+*Revisitation vs duration*
 ```{r}
 hsp <- lhs.plot.scatter(toni.lhs.k15, x="nsv", y="mnlv", col="spiral",
 bg="black"); plot(toni.lhs.k15, hpp=T, hsp=hsp, hpp.classify="hsp")

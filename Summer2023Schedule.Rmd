@@ -58,13 +58,17 @@ This module covers methods that can be used to identify clusters, such as scan s
 **Friday, July 14**
 
 ## Compartmental Models
+This module contains a brief overview of the basics of compartmental models for infectious disease modeling, including key terminology and concepts. Covers SIR models and some variations; includes a practice exercise.
+
 - [Tutorial link](https://rpubs.com/KNightingale/1062478)
-- [Code link]
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/TransmissionModels/05_ModelingBasics.Rmd)
 - Solution link - will be added later
 
 ## Metapopulation Models
+Metapopulation models take two levels of disease transmission into account - transmission within individual "patches" and transmission across patches. This module covers the basics of how to model disease in metapopulations.
+
 - [Tutorial link](https://rpubs.com/KNightingale/1062482)
-- [Code link]()
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/TransmissionModels/06_MetapopulationModel.Rmd)
 
 # Session 4
 **Friday, July 21**

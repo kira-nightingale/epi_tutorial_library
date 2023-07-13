@@ -45,25 +45,26 @@ Building on the mapping techniques in the prior tutorial, this session covers th
 ## GPS Data Analysis
 Using data from a GPS collar fitted to a buffalo (Toni) in Kruger National Park, South Africa from 2005-2006, this tutorial introduces methods to analyze location data. Methods include basic plotting, kernel density estimation, and time local convex hull (t-LoCoH).
 
-- [Tutorial link]("https://rpubs.com/KNightingale/1060153")
-- [Code link]("https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/04_GPStracking.Rmd")
+- [Tutorial link](https://rpubs.com/KNightingale/1060153)
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/04_GPStracking.Rmd)
 
 ## Classic Spatial Epidemiology
 This module covers methods that can be used to identify clusters, such as scan statistics, spatial relative risk, and Moran's I.
 
-- [Tutorial link]("https://rpubs.com/KNightingale/1060152")
-- [Code link]("https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/05_SpatialClustering.Rmd")
+- [Tutorial link](https://rpubs.com/KNightingale/1060152)
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/Spatial/05_SpatialClustering.Rmd)
 
 # Session 3
 **Friday, July 14**
 
 ## Compartmental Models
-- Tutorial link
-- Code link
+- [Tutorial link](https://rpubs.com/KNightingale/1062478)
+- [Code link]
+- Solution link - will be added later
 
 ## Metapopulation Models
-- Tutorial link
-- Code link
+- [Tutorial link](https://rpubs.com/KNightingale/1062482)
+- [Code link]()
 
 # Session 4
 **Friday, July 21**

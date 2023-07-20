@@ -13,17 +13,26 @@ This repo contains a series of tutorials for quantitative epidemiologic methods 
 ## Table of Contents  
 *The repo is organized into folders by methodology.*   
 
-Summer2022Schedule  
+Summer2023Schedule  
 
 + .Rmd file is source code and .html is rendered output.  
 
-+ Tentative schedule for topics to discuss. will be updated throughout the summer and populated with hyperlinks. [Here](https://rpubs.com/bhraynor/MethodsSummer2022) is the published web page. 
++ Tentative schedule for topics to discuss. will be updated throughout the summer and populated with hyperlinks. [Here](https://rpubs.com/KNightingale/SUIP2023) is the published web page. 
 
 
 **Spatial/**  
 *A folder of sample codes to explore spatial data - both visualization and analysis.*   
 
-01_ChoroplethMaps 
+01_Mapping  
+
++ The .Rmd file is the R markdown code and the .html file is the rendered html output.  
+
++ R code for making visually appealing maps using 3 methods: layering shapefiles, adding background tiles, creating interactive maps  
+
++ This [tutorial](https://rpubs.com/KNightingale/SUIP2023_01) runs through an example using freely accessible data on hospital locations in the city of Philadelphia.
+
+
+02_ChoroplethMaps 
 
 + The .Rmd file is the R markdown code and the .html file is the rendered html output.  
 
@@ -31,35 +40,44 @@ Summer2022Schedule
 
 + Includes code to work with point,line, and polygon spatial data using the sf package.  
 
-+ This [tutorial](https://rpubs.com/bhraynor/MethodsSummer2022) runs through an example using freely accessible data on the city of Philadelphia looking at litter index and trashcan availability.  
++ This [tutorial](https://rpubs.com/KNightingale/SUIP2023_2) runs through an example using freely accessible data on the city of Philadelphia looking at litter index and trashcan availability.  
 
-02_Mapping  
+
+03_Mapping Exercise
 
 + The .Rmd file is the R markdown code and the .html file is the rendered html output.  
 
-+ R code for making visually appealing maps using 3 methods: layering shapefiles, adding background tiles, creating interactive maps  
++ This is a practice exercise using publically available data from the city of Philadelphia.
 
-+ This [tutorial](https://rpubs.com/bhraynor/mapping) runs through an example using freely accessible data on hospital locations in the city of Philadelphia.
 
-03_GPStracking  
+04_GPStracking  
 
 + The .Rmd file is the R markdown code and the .html file is the rendered html output.  
 
 + R code for estimating home range from GPS tracking data using KDE and t-locoh.  
 
-+ This [tutorial](https://rpubs.com/bhraynor/Tutorial3_GPStracking) runs through an example using the t-locoh and kde examples.
++ This [tutorial](https://rpubs.com/KNightingale/1060153) runs through an example using the t-locoh and kde examples.
 
 
-04_SpatialClustering  
+05_SpatialClustering  
 
 + The .Rmd file is the R markdown code and the .html file is the rendered html output.  
 
 + R code for estimating spatial epi statistics including scan statistics for clustering, relative risk, and Moran's I.  
 
-+ This [tutorial](https://rpubs.com/bhraynor/SpatialEpi) runs codes provided in package examples to execute these methods.
++ This [tutorial](https://rpubs.com/KNightingale/1060152) runs codes provided in package examples to execute these methods.
 
 **TransmissionModels/**  
 *A folder of sample codes for mathematical models of infectious disease transmission.*
+
+06_Modelling Basics
+
++ The .Rmd file is the R markdown code and the .html file is the rendered html output.  
+
++ R code for a simple, deterministic, SIR model, plus addition of compartments. Also includes a practice exercise.
+
++ The [tutorial](https://rpubs.com/KNightingale/1062478) can be found here.   
+
 
 05_MetapopulationModel 
 
@@ -67,7 +85,7 @@ Summer2022Schedule
 
 + R code for a simple, deterministic, metapopulation model.
 
-+ This [tutorial](https://rpubs.com/bhraynor/MetapopulationModel) runs through 2 examples look at systems with 3 patches coupled in different configurations.   
++ This [tutorial](https://rpubs.com/KNightingale/1062482) runs through 2 examples look at systems with 3 patches coupled in different configurations.   
 
 06_StochasticSIR  
 
@@ -75,7 +93,7 @@ Summer2022Schedule
 
 + R code for a simple, stochastic SIR model.  
 
-+ This [tutorial](https://rpubs.com/bhraynor/StochasticSIR) runs through stochastic simulation code for a simple SIR model. 
++ This [tutorial](https://rpubs.com/KNightingale/1064573) runs through stochastic simulation code for a simple SIR model. 
 
 
 07_MetapopulationModel 
@@ -84,25 +102,4 @@ Summer2022Schedule
 
 + R code for metropolis hasting sampler to estimate parameters for simulated SIR data.
 
-+ This [tutorial](https://rpubs.com/bhraynor/SIRinference) corresponds to the code. 
-
-
-SIR_schematic.png 
-
-+ Simple flow chart schematic of SIR metapopulation system used in 05_MetapopulationModel code. 
-
-System1.png  
-
-+ Simple flow chart schematic of 3 patches interacting used in 05_MetapopulationModel code.  
-
-System2.png  
-
-+ Simple flow chart schematic of 3 patches interacting used in 05_MetapopulationModel code.  
-
-
-## How to use  
-To use these codes, clone the repo and run the codes.  
-
-## Contact information   
-Brinkley Raynor    
-bhraynor@gmail.com   
++ This [tutorial](https://rpubs.com/KNightingale/1064580) corresponds to the code. 

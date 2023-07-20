@@ -94,6 +94,7 @@ ggplot() +
   ylab("Number of individuals") + xlab("Time")
 
 ```
+
 Repeat simulations
 ```{r, warning=FALSE, message=FALSE}
 

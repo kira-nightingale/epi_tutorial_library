@@ -74,9 +74,13 @@ Metapopulation models take two levels of disease transmission into account - tra
 **Friday, July 21**
 
 ## Stochastic Models
-- Tutorial link
-- Code link
+This module introduces a simple stochastic SIR model.
+
+- [Tutorial link](https://rpubs.com/KNightingale/1064573)
+- [Code link]()
 
 ## Inference for Transmission Models
-- Tutorial link
+This module provides an example of how parameters can be estimated using Beysian methods.
+
+- [Tutorial link](https://rpubs.com/KNightingale/1064580)
 - Code link

@@ -62,7 +62,7 @@ This module contains a brief overview of the basics of compartmental models for 
 
 - [Tutorial link](https://rpubs.com/KNightingale/1062478)
 - [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/TransmissionModels/05_ModelingBasics.Rmd)
-- Solution link - will be added later
+- [Solution link](https://rpubs.com/KNightingale/1062479)
 
 ## Metapopulation Models
 Metapopulation models take two levels of disease transmission into account - transmission within individual "patches" and transmission across patches. This module covers the basics of how to model disease in metapopulations.
@@ -77,10 +77,10 @@ Metapopulation models take two levels of disease transmission into account - tra
 This module introduces a simple stochastic SIR model.
 
 - [Tutorial link](https://rpubs.com/KNightingale/1064573)
-- [Code link]()
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/TransmissionModels/06_StochasticSIR.Rmd)
 
 ## Inference for Transmission Models
 This module provides an example of how parameters can be estimated using Beysian methods.
 
 - [Tutorial link](https://rpubs.com/KNightingale/1064580)
-- Code link
+- [Code link](https://github.com/kira-nightingale/epi_tutorial_library/blob/main/TransmissionModels/07_SIRinference.Rmd)
